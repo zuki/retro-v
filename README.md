@@ -1,2 +1,3 @@
 # retro-v
-Retro-V v1.0 is a SoftCPU that implements RISC-V 32-bit architecture RV32I, but with 8-bit databus
+Retro-V v1.0 is a SoftCPU in Verilog that implements RISC-V 32-bit architecture RV32I,
+but with 8-bit databus to look like retro 8-bit microprocessor suitable for DIY computers...
