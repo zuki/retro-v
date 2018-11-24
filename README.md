@@ -1,9 +1,10 @@
 # Retro-V v1.0
-Retro-V is a SoftCPU in Verilog from Shaos that implements RISC-V 32-bit architecture RV32I,
-but with 8-bit databus to look like retro 8-bit microprocessor suitable for DIY computers
-(like "nedoPC-5" for example: https://gitlab.com/nedopc/npc5), capable of passing
-RV32I compliance tests, compatible with RTOS Zephyr and distributed as fully open
-sourced Verilog soft core under Apache License:
+Retro-V is a SoftCPU in Verilog created from scratch by Shaos and it implements RISC-V
+architecture RV32I (32-bit integer), but with 8-bit databus to resemble
+a retro 8-bit microprocessor suitable for DIY computers
+(like "nedoPC-5" for example: https://gitlab.com/nedopc/npc5).
+Retro-V is capable of passing RV32I compliance tests, compatible with RTOS Zephyr and
+distributed as fully open sourced Verilog single file soft core under Apache License:
 
     // Copyright 2018 Alexander Shabarshin <ashabarshin@gmail.com>
     //
