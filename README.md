@@ -22,8 +22,8 @@ and distributed as fully open sourced Verilog single file soft core under Apache
 
 THIS IS STILL WORK IN PROGRESS!!! NOT YET READY FOR 100% COMPLIANCE OR ZEPHYR!
 
-This design has 2-stage pipeline with 4 cycles per stage, so in average every instruction
-takes 4 cycles (with 40 MHz clock it will be 10 millions instructions per second in average).
+This design has 2-stage pipeline with 4 cycles per stage, so on average every instruction
+takes 4 cycles (with 40 MHz clock it will be 10 millions instructions per sec max).
 Branches and Jump-and-Links takes 1 cycle more (5 cycles total).
 Loads: LB - 5 cycles, LH - 6 cycles, LW - 8 cycles.
 Stores: SB - 6 cycles, SH - 7 cycles, SW - 9 cycles (1 more than loads).
@@ -92,3 +92,12 @@ Current Design Statistics from iCEcube2:
     HFOSCs                      :	0/1
     SPRAMs                      :	0/4
     FILTER50NSs                 :	0/2
+
+Performance Summary:
+
+    Worst slack in design: -3.532
+                       Requested     Estimated     Requested     Estimated                Clock        Clock                
+    Starting Clock     Frequency     Frequency     Period        Period        Slack      Type         Group                
+    ------------------------------------------------------------------------------------------------------------------------
+    retro|clk          50.0 MHz      41.7 MHz      20.016        23.983        -3.532     inferred     Autoconstr_clkgroup_0
+    ========================================================================================================================
