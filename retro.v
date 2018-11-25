@@ -2,7 +2,7 @@
 // that is compilable by Verilator, capable to pass RV32I compliance tests
 // and compatible with RTOS Zephyr v1.13.0
 //
-// RETRO-V v1.0-Alpha2 (November 2018)
+// RETRO-V v1.0-Alpha3 (November 2018)
 //
 // Copyright 2018 Alexander Shabarshin <ashabarshin@gmail.com>
 //
@@ -89,7 +89,7 @@ always @(posedge clk) begin
                                if(rd!=6'b0) begin
                                   regs[rd] <= pc; // this is pc+4 stored to rd
                                end
-//                               res <= 32'b0;
+                               res <= 32'b0;
                        end
                     10'b0001100111: // JALR
                        begin
@@ -99,7 +99,7 @@ always @(posedge clk) begin
                                if(rd!=6'b0) begin
                                   regs[rd] <= pc; // this is pc+4 stored to rd
                                end
-//                               res <= 32'b0;
+                               res <= 32'b0;
                        end
                     10'b0001100011: // BEQ
                        begin
@@ -111,7 +111,7 @@ always @(posedge clk) begin
                                   pc2 <= pc;
                                   pcflag <= 1'b0;
                                end
-//                               res <= 32'b0;
+                               res <= 32'b0;
                        end
                     10'b0011100011: // BNE
                        begin
@@ -123,7 +123,7 @@ always @(posedge clk) begin
                                   pc2 <= pc;
                                   pcflag <= 1'b0;
                                end
-//                               res <= 32'b0;
+                               res <= 32'b0;
                        end
                     10'b1001100011: // BLT
                        begin
@@ -135,7 +135,7 @@ always @(posedge clk) begin
                                   pc2 <= pc;
                                   pcflag <= 1'b0;
                                end
-//                               res <= 32'b0;
+                               res <= 32'b0;
                        end
                     10'b1011100011: // BGE
                        begin
@@ -147,7 +147,7 @@ always @(posedge clk) begin
                                   pc2 <= pc;
                                   pcflag <= 1'b0;
                                end
-//                               res <= 32'b0;
+                               res <= 32'b0;
                        end
                     10'b1101100011: // BLTU
                        begin
@@ -159,7 +159,7 @@ always @(posedge clk) begin
                                   pc2 <= pc;
                                   pcflag <= 1'b0;
                                end
-//                               res <= 32'b0;
+                               res <= 32'b0;
                        end
                     10'b1111100011: // BGEU
                        begin
@@ -171,7 +171,7 @@ always @(posedge clk) begin
                                   pc2 <= pc;
                                   pcflag <= 1'b0;
                                end
-//                               res <= 32'b0;
+                               res <= 32'b0;
                        end
                     10'b???0?00011: // LOAD or STORE
                        begin
@@ -472,11 +472,15 @@ always @(posedge clk) begin
                        end
                     10'b0001110011: // ECALL, EBREAK and other priviledged instructions
                        begin
+                               pc2 <= pc;
+                               pcflag <= 1'b0;
+                               res <= 32'b0;
                        end
                     default: // FENCE and FENCE.I go here as NOPs
                        begin
                                pc2 <= pc; // this is actually store in the 1st stage to use in the 2nd
                                pcflag <= 1'b0;
+                               res <= 32'b0;
                        end
                  endcase
                  end

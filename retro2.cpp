@@ -186,6 +186,7 @@ int main(int argc, char** argv, char** env)
           << " din=" << setw(2) << (int)top->data_in << " dout=" << setw(2) << (int)top->data_out << " wren=" << (int)top->wren
           << " inst=" << setw(8) << (int)top->retro->inst << " rd=" << (int)top->retro->__PVT__rd
           << " arg1=" << setw(8) << (int)top->retro->arg1 << " arg2=" << setw(8) << (int)top->retro->arg2 << " imm=" << setw(8) << (int)top->retro->imm
+          << " pc=" << setw(8) << (int)top->retro->__PVT__pc << " pc2=" << setw(8) << (int)top->retro->__PVT__pc2
           << " x1=" << setw(8) << (int)top->retro->__PVT__regs[1]
           << " x2=" << setw(8) << (int)top->retro->__PVT__regs[2]
           << " x3=" << setw(8) << (int)top->retro->__PVT__regs[3]
@@ -210,8 +211,8 @@ int main(int argc, char** argv, char** env)
 
      if(top->wren && !old_clk)
      {
-          printf("Write %2.2X to %4.4X\n",(unsigned char)top->data_out,top->address);
-          if(top->address==0xFFFF) cerr << (char)top->data_out;
+          printf("write 0x%2.2X to 0x%4.4X\n",(unsigned char)top->data_out,top->address);
+          if(top->address==0xFFFF && top->clk) cerr << (char)top->data_out;
           else ram[top->address] = (unsigned char)top->data_out;
      }
 
