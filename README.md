@@ -1,7 +1,7 @@
 # Retro-V v1.0
-Retro-V is a SoftCPU in Verilog created by Shaos implementing RISC-V
-architecture RV32I (32-bit integer), but with 8-bit databus to resemble
-a retro 8-bit microprocessor suitable for DIY computers
+Retro-V is a SoftCPU in Verilog created by Shaos (completely from scratch)
+implementing RISC-V architecture RV32I (32-bit integer), but with 8-bit databus
+to resemble a retro 8-bit microprocessor suitable for DIY computers
 ( like "nedoPC-5" for example: https://gitlab.com/nedopc/npc5 ).
 Retro-V is capable of passing RV32I compliance tests (now 20/55), compatible with RTOS Zephyr (not yet there)
 and distributed as fully open sourced Verilog single file soft core under Apache License:
@@ -28,47 +28,28 @@ Branches and Jump-and-Links takes 1 cycle more (5 cycles total).
 Loads: LB - 5 cycles, LH - 6 cycles, LW - 8 cycles.
 Stores: SB - 6 cycles, SH - 7 cycles, SW - 9 cycles (1 more than loads).
 
-Current compliance tests status:
+Current compliance tests status (20/55):
 
-Check         I-ADD-01 ... OK
-
-Check        I-ADDI-01 ... OK
-
-Check         I-AND-01 ... OK
-
-Check        I-ANDI-01 ... OK
-
-Check             I-IO ... OK
-
-Check          I-OR-01 ... OK
-
-Check         I-ORI-01 ... OK
-
-Check         I-SLL-01 ... OK
-
-Check        I-SLLI-01 ... OK
-
-Check         I-SLT-01 ... OK
-
-Check        I-SLTI-01 ... OK
-
-Check       I-SLTIU-01 ... OK
-
-Check        I-SLTU-01 ... OK
-
-Check         I-SRA-01 ... OK
-
-Check        I-SRAI-01 ... OK
-
-Check         I-SRL-01 ... OK
-
-Check        I-SRLI-01 ... OK
-
-Check         I-SUB-01 ... OK
-
-Check         I-XOR-01 ... OK
-
-Check        I-XORI-01 ... OK
+    Check         I-ADD-01 ... OK
+    Check        I-ADDI-01 ... OK
+    Check         I-AND-01 ... OK
+    Check        I-ANDI-01 ... OK
+    Check             I-IO ... OK
+    Check          I-OR-01 ... OK
+    Check         I-ORI-01 ... OK
+    Check         I-SLL-01 ... OK
+    Check        I-SLLI-01 ... OK
+    Check         I-SLT-01 ... OK
+    Check        I-SLTI-01 ... OK
+    Check       I-SLTIU-01 ... OK
+    Check        I-SLTU-01 ... OK
+    Check         I-SRA-01 ... OK
+    Check        I-SRAI-01 ... OK
+    Check         I-SRL-01 ... OK
+    Check        I-SRLI-01 ... OK
+    Check         I-SUB-01 ... OK
+    Check         I-XOR-01 ... OK
+    Check        I-XORI-01 ... OK
 
 Current Design Statistics from iCEcube2:
 
