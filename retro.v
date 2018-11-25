@@ -18,6 +18,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// THIS IS STILL WORK IN PROGRESS!!! NOT YET READY FOR TESTS OR ZEPHYR!
+
 module retro (nres,clk,hold,address,data_in,data_out,wren);
 
 parameter ADDRESS_WIDTH = 16;       // address bus width
@@ -44,12 +46,13 @@ reg [31:0] imm  /*verilator public*/;
 reg [31:0] pc;  // program counter
 reg [31:0] pc2; // stored program counter
 reg [31:0] res; // result register
-reg [9:0] op; // extended opcode
+reg [9:0] op;   // extended opcode
 reg [5:0] rd,rd2; // destination register ids
-reg [2:0] lbytes; // number of bytes to load
-reg [2:0] sbytes; // number of bytes to store
+reg [2:0] lbytes; // current number of bytes to load
+reg [2:0] sbytes; // current number of bytes to store
+reg [1:0] bytes;  // total number of bytes to transfer (3 means 4)
 reg [31:0] extaddr; // external address
-reg flag,pcflag,errop/*verilator public*/; // flags
+reg flag,pcflag,unflag,errop/*verilator public*/; // flags
 
 assign address = (lbytes!=3'b0||sbytes!=3'b0)?extaddr[ADDRESS_WIDTH-1:0]:pc[ADDRESS_WIDTH-1:0];
 
@@ -86,7 +89,7 @@ always @(posedge clk) begin
                                if(rd!=6'b0) begin
                                   regs[rd] <= pc; // this is pc+4 stored to rd
                                end
-                               res <= 32'b0;
+//                               res <= 32'b0;
                        end
                     10'b0001100111: // JALR
                        begin
@@ -96,7 +99,7 @@ always @(posedge clk) begin
                                if(rd!=6'b0) begin
                                   regs[rd] <= pc; // this is pc+4 stored to rd
                                end
-                               res <= 32'b0;
+//                               res <= 32'b0;
                        end
                     10'b0001100011: // BEQ
                        begin
@@ -108,7 +111,7 @@ always @(posedge clk) begin
                                   pc2 <= pc;
                                   pcflag <= 1'b0;
                                end
-                               res <= 32'b0;
+//                               res <= 32'b0;
                        end
                     10'b0011100011: // BNE
                        begin
@@ -120,7 +123,7 @@ always @(posedge clk) begin
                                   pc2 <= pc;
                                   pcflag <= 1'b0;
                                end
-                               res <= 32'b0;
+//                               res <= 32'b0;
                        end
                     10'b1001100011: // BLT
                        begin
@@ -132,7 +135,7 @@ always @(posedge clk) begin
                                   pc2 <= pc;
                                   pcflag <= 1'b0;
                                end
-                               res <= 32'b0;
+//                               res <= 32'b0;
                        end
                     10'b1011100011: // BGE
                        begin
@@ -144,7 +147,7 @@ always @(posedge clk) begin
                                   pc2 <= pc;
                                   pcflag <= 1'b0;
                                end
-                               res <= 32'b0;
+//                               res <= 32'b0;
                        end
                     10'b1101100011: // BLTU
                        begin
@@ -156,7 +159,7 @@ always @(posedge clk) begin
                                   pc2 <= pc;
                                   pcflag <= 1'b0;
                                end
-                               res <= 32'b0;
+//                               res <= 32'b0;
                        end
                     10'b1111100011: // BGEU
                        begin
@@ -168,7 +171,7 @@ always @(posedge clk) begin
                                   pc2 <= pc;
                                   pcflag <= 1'b0;
                                end
-                               res <= 32'b0;
+//                               res <= 32'b0;
                        end
                     10'b???0?00011: // LOAD or STORE
                        begin
@@ -180,10 +183,17 @@ always @(posedge clk) begin
                                    lbytes <= (op[8:7]==2'b00)?3'b001:
                                              (op[8:7]==2'b01)?3'b010:
                                              (op[8:7]==2'b10)?3'b100:3'b0;
+                                   bytes  <= (op[8:7]==2'b00)?2'b01:
+                                             (op[8:7]==2'b01)?2'b10:
+                                             (op[8:7]==2'b10)?2'b11:2'b0;
+                                   unflag <= op[9];
                                  end else begin // STORE
                                    sbytes <= (op[8:7]==2'b00)?3'b010:
                                              (op[8:7]==2'b01)?3'b011:
                                              (op[8:7]==2'b10)?3'b101:3'b0;
+                                   bytes  <= (op[8:7]==2'b00)?2'b01:
+                                             (op[8:7]==2'b01)?2'b10:
+                                             (op[8:7]==2'b10)?2'b11:2'b0;
                                  end
                                  res <= 32'b0;
                                end else begin // memory transfer in progress
@@ -191,38 +201,68 @@ always @(posedge clk) begin
                                    extaddr <= extaddr + 1'b1;
                                    lbytes <= lbytes - 1'b1;
                                    case (lbytes)
-                                     3'b100:  res <= { data_in, res[23:0] };
-                                     3'b011:  res <= { res[31:24], data_in, res[15:0] };
-                                     3'b010:  res <= { res[31:16], data_in, res[7:0] };
-                                     3'b001:  res <= { res[31:8], data_in };
-                                     default: res <= 32'b0;
+                                     3'b100:
+                                       begin
+                                         res <= { 24'b0, data_in };
+                                       end
+                                     3'b011:
+                                       begin
+                                         res <= { 16'b0, data_in, res[7:0] };
+                                       end
+                                     3'b010:
+                                       begin
+                                         if(bytes==2'b10) begin
+                                            res <= { 24'b0, data_in };
+                                         end else begin // 2'b11
+                                            res <= { 8'b0, data_in, res[15:0] };
+                                         end
+                                       end
+                                     default: // 3'b001
+                                       begin
+                                         if(bytes==2'b01) begin
+                                            if(unflag==1'b1 || data_in[7]==1'b0) begin
+                                               res <= { 24'b000000000000000000000000, data_in };
+                                            end else begin
+                                               res <= { 24'b111111111111111111111111, data_in };
+                                            end
+                                         end else begin
+                                            if(bytes==2'b10) begin
+                                               if(unflag==1'b1 || data_in[7]==1'b0) begin
+                                                  res <= { 16'b0000000000000000, data_in, res[7:0] };
+                                               end else begin
+                                                  res <= { 16'b1111111111111111, data_in, res[7:0] };
+                                               end
+                                            end else begin // 2'b11
+                                               res <= { data_in, res[23:0] };
+                                            end
+                                         end
+                                       end
                                    endcase
                                  end else begin // STORE
                                    sbytes <= sbytes - 1'b1;
                                    case (sbytes)
                                      3'b101:
                                        begin
-                                        extaddr <= extaddr+1'b1;
-                                        extaddr <= (extaddr==UART_TX_ADDR)?32'hFFFFFFFF:extaddr;
-                                        data_out <= arg2[31:24];
+                                        extaddr <= extaddr;
+                                        data_out <= arg2[7:0];
                                         wren <= 1'b1;
                                        end
                                      3'b100:
                                        begin
                                         extaddr <= extaddr+1'b1;
-                                        data_out <= arg2[23:16];
+                                        data_out <= arg2[15:8];
                                         wren <= 1'b1;
                                        end
                                      3'b011:
                                        begin
-                                        extaddr <= extaddr+1'b1;
-                                        data_out <= arg2[15:8];
+                                        extaddr <= extaddr+bytes[0];
+                                        data_out <= (bytes==2'b11)?arg2[23:16]:arg2[7:0];
                                         wren <= 1'b1;
                                        end
                                      3'b010:
                                        begin
-                                        extaddr <= (extaddr==UART_TX_ADDR)?32'hFFFFFFFF:extaddr;
-                                        data_out <= arg2[7:0];
+                                        extaddr <= (extaddr==UART_TX_ADDR)?32'hFFFFFFFF:(extaddr+bytes[1]);
+                                        data_out <= (bytes==2'b11)?arg2[31:24]:(bytes==2'b10)?arg2[15:8]:arg2[7:0];
                                         wren <= 1'b1;
                                        end
                                      default:
@@ -432,13 +472,11 @@ always @(posedge clk) begin
                        end
                     10'b0001110011: // ECALL, EBREAK and other priviledged instructions
                        begin
-
                        end
                     default: // FENCE and FENCE.I go here as NOPs
                        begin
                                pc2 <= pc; // this is actually store in the 1st stage to use in the 2nd
                                pcflag <= 1'b0;
-                               res <= 32'b0;
                        end
                  endcase
                  end
