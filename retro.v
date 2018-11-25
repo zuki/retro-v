@@ -2,7 +2,7 @@
 // that is compilable by Verilator, capable to pass RV32I compliance tests
 // and compatible with RTOS Zephyr v1.13.0
 //
-// RETRO-V v1.0-Alpha3 (November 2018)
+// RETRO-V v1.0-Alpha4 (November 2018)
 //
 // Copyright 2018 Alexander Shabarshin <ashabarshin@gmail.com>
 //
@@ -487,8 +487,8 @@ always @(posedge clk) begin
 
           2'b01: begin // 2nd byte of the instruction (fill op and rd)
                  inst <= { 16'h0000, data_in, inst[7:0] };
-                 if(inst[6:0]==7'b0100011) begin
-                    rd <= 6'b0; // STORE special case
+                 if(inst[6:0]==7'b0100011 || inst[6:0]==7'b1100011) begin
+                    rd <= 6'b0; // STORE and BRANCH special case
                  end else begin
                     rd <= { 1'b0, data_in[3:0], inst[7] };
                  end

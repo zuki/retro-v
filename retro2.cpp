@@ -202,6 +202,7 @@ int main(int argc, char** argv, char** env)
           << " x13=" << setw(8) << (int)top->retro->__PVT__regs[13]
           << " x14=" << setw(8) << (int)top->retro->__PVT__regs[14]
           << " x15=" << setw(8) << (int)top->retro->__PVT__regs[15]
+          << " x31=" << setw(8) << (int)top->retro->__PVT__regs[31]
           << " extaddr=" << setw(8) << (int)top->retro->__PVT__extaddr
           << " res=" << setw(8) << (int)top->retro->__PVT__res
           << setw(4) << " op=" << (int)top->retro->__PVT__op << dec << " errop=" << (int)top->retro->errop
