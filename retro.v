@@ -2,7 +2,7 @@
 // that is compilable by Verilator, capable to pass RV32I compliance tests
 // and compatible with RTOS Zephyr v1.13.0
 //
-// RETRO-V v1.0 (November 2018)
+// RETRO-V v1.0-Alpha2 (November 2018)
 //
 // Copyright 2018 Alexander Shabarshin <ashabarshin@gmail.com>
 //
@@ -255,13 +255,13 @@ always @(posedge clk) begin
                                        end
                                      3'b011:
                                        begin
-                                        extaddr <= extaddr+bytes[0];
+                                        extaddr <= extaddr+{31'b0,bytes[0]};
                                         data_out <= (bytes==2'b11)?arg2[23:16]:arg2[7:0];
                                         wren <= 1'b1;
                                        end
                                      3'b010:
                                        begin
-                                        extaddr <= (extaddr==UART_TX_ADDR)?32'hFFFFFFFF:(extaddr+bytes[1]);
+                                        extaddr <= (extaddr==UART_TX_ADDR)?32'hFFFFFFFF:(extaddr+{31'b0,bytes[1]});
                                         data_out <= (bytes==2'b11)?arg2[31:24]:(bytes==2'b10)?arg2[15:8]:arg2[7:0];
                                         wren <= 1'b1;
                                        end
