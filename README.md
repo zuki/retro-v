@@ -1,6 +1,6 @@
 # Retro-V v1.0
 Retro-V is a SoftCPU in Verilog created by Shaos (completely from scratch)
-implementing RISC-V architecture RV32I (32-bit integer), but with 8-bit databus
+that implements RISC-V architecture RV32I (32-bit integer), but with 8-bit databus
 to resemble a retro 8-bit microprocessor suitable for DIY computers
 ( like "nedoPC-5" for example: https://gitlab.com/nedopc/npc5 ).
 Retro-V is capable of passing RV32I compliance tests (now 78%), compatible with RTOS Zephyr (not yet there)
@@ -94,7 +94,7 @@ Current Design Statistics from iCEcube2 for iCE40UP5K FPGA:
 
     Number of LUTs      	:	2157
     Number of DFFs      	:	327
-    Number of DFFs packed to IO	:	0
+    Number of DFFs packed to IO :	0
     Number of Carrys    	:	269
     Number of RAMs      	:	4
     Number of ROMs      	:	0
@@ -111,7 +111,7 @@ Current Design Statistics from iCEcube2 for iCE40UP5K FPGA:
     Number of RGBADRVs     	:	0
     Number of LFOSCs     	:	0
     Number of HFOSCs     	:	0
-    Number of FILTER_50NSs     	:	0
+    Number of FILTER_50NSs	:	0
     Number of SPRAMs     	:	0
 
     Device Utilization Summary
@@ -132,7 +132,7 @@ Current Design Statistics from iCEcube2 for iCE40UP5K FPGA:
     SPRAMs                      :	0/4
     FILTER50NSs                 :	0/2
 
-Performance Summary (estimated by iCEcube2):
+Performance Summary (as estimated by iCEcube2):
 
     Worst slack in design: -3.656
                        Requested     Estimated     Requested     Estimated                Clock        Clock                
