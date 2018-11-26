@@ -36,9 +36,9 @@ As you can see Retro-V core reads from register file in cycles 3 and 4 and write
 The fact that reading and writing are always performed in different moments in time allows us to implement register file by block memory inside FPGA.
 Also it is obvious that this design doesn't have hazard problem if the same register is written in one instruction and we have read
 in the next because instruction reads 1st argument in cycle 3 and write back from previous instruction is already happened in previous cycle.
-In case of jump (BRANCH or JAL/JAR) next instruction from pipeline alread performed 1st cycle,
+In case of jump ( **JAL/JALR** or **BRANCH** instructions) next instruction from pipeline alread performed 1st cycle,
 so it stops right there and next cycle is 1st one from new address effectively re-initing the pipeline (so branch penalty is only 1 cycle).
-In case of memory access (LOAD or STORE) state machine stays in cycle 4 for a while (to load or store bytes from/to memory one by one wasting
+In case of memory access (**LOAD** or **STORE** instructions) state machine stays in cycle 4 for a while (to load or store bytes from/to memory one by one wasting
 from 1 to 5 extra cycles) and next instruction in pipeline is kind of frozen between cycle 1 and cycle 2 in the same time.
 
 If we count only "visible" cycles (from the beginning of one instructions to the beginning of the next one) then:
@@ -53,7 +53,7 @@ If we count only "visible" cycles (from the beginning of one instructions to the
 * **SW** takes 9 cycles (because of 4 extra cycles to read 4 bytes from memory and 1 preparational cycle)
 * Everything else takes 4 cycles (plus 2 hidden cycles on the 2nd stage of pipeline)
 
-## RV32I ompliance tests
+## RV32I compliance tests
 
 Tests available here: https://github.com/riscv/riscv-compliance/
 
