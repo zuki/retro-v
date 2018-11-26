@@ -28,7 +28,7 @@ Branches and Jump-and-Links takes 1 cycle more (5 cycles total).
 Loads: LB - 5 cycles, LH - 6 cycles, LW - 8 cycles.
 Stores: SB - 6 cycles, SH - 7 cycles, SW - 9 cycles (1 more than loads).
 
-Description of cycles in 2-stage pipeline:
+Description of cycles in 2-stage pipeline of Retro-V core:
 
 * **Cycle 1** - Fetch 1st byte of the instruction (lowest one)
 
@@ -43,11 +43,10 @@ Description of cycles in 2-stage pipeline:
 * **Cycle 6** (overlapped with *Cycle 2* of the next instruction) - Write back to register file if destination register is not 0
 
 As you can see Retro-V core reads from register file in cycles 3 and 4 and write to register file in cycles 1 and 2 (the same as 5 and 6 for 2nd stage of pipeline)
-that fact allows us to implement register file by block memory inside FPGA.
-
-In case of branching (BRANCH or JAL/JAR) next instruction from pipeline alread performed 1st cycle, so it stops right there and
-next cycle is 1st one from new address effectively re-initing the pipeline (so branch penalty is only 1 cycle).
-
+that fact allows us to implement register file by block memory inside FPGA. Also it is obvious that this design doesn't have hazard problem if the same register
+is written in one instruction and we have read in the next because instruction reads 1st argument in cycle 3 and write back from previous instruction
+is already happened in previous cycle. In case of branching (BRANCH or JAL/JAR) next instruction from pipeline alread performed 1st cycle,
+so it stops right there and next cycle is 1st one from new address effectively re-initing the pipeline (so branch penalty is only 1 cycle).
 In case of memory access (LOAD or STORE) state machine stays in cycle 4 for a while (to load or store bytes from/to memory one by one wasting
 from 1 to 5 extra cycles) and next instruction in pipeline is kind of frozen between cycle 1 and cycle 2 in the same time.
 
