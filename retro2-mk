@@ -3,3 +3,4 @@ verilator -Wall --cc retro.v --exe retro2.cpp -LDFLAGS -lelf
 make -j -C obj_dir -f Vretro.mk
 cd riscv-compliance
 make RISCV_TARGET=spike RISCV_DEVICE=rv32i TARGET_SIM=/home/shaos/src/RISCV/obj_dir/Vretro variant
+
