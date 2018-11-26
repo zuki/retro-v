@@ -3,7 +3,7 @@ Retro-V is a SoftCPU in Verilog created by Shaos (completely from scratch)
 that implements RISC-V architecture RV32I (32-bit integer), but with 8-bit databus
 to resemble a retro 8-bit microprocessor suitable for DIY computers
 ( like "nedoPC-5" for example: https://gitlab.com/nedopc/npc5 ).
-Retro-V is capable of passing RV32I compliance tests (now 78%), compatible with RTOS Zephyr (not yet there)
+Retro-V is capable of passing RV32I compliance tests (now 82%), compatible with RTOS Zephyr (not yet there)
 and distributed as fully open sourced Verilog single file soft core under Apache License:
 
     // Copyright 2018 Alexander Shabarshin <ashabarshin@gmail.com>
@@ -30,7 +30,7 @@ Stores: SB - 6 cycles, SH - 7 cycles, SW - 9 cycles (1 more than loads).
 
 RV32I compliance tests were found here: https://github.com/riscv/riscv-compliance/
 
-Current compliance tests status for Retro-V soft core is 43/55=78%:
+Current compliance tests status for Retro-V soft core is 45/55=81.8%:
 
     Check         I-ADD-01 ... OK
     Check        I-ADDI-01 ... OK
@@ -55,8 +55,8 @@ Current compliance tests status for Retro-V soft core is 43/55=78%:
     Check   I-ENDIANESS-01 ... OK
     Check     I-FENCE.I-01 ... OK
     Check             I-IO ... OK
-    Check         I-JAL-01   FAIL
-    Check        I-JALR-01   FAIL
+    Check         I-JAL-01 ... OK
+    Check        I-JALR-01 ... OK
     Check          I-LB-01 ... OK
     Check         I-LBU-01 ... OK
     Check          I-LH-01 ... OK
@@ -88,14 +88,14 @@ Current compliance tests status for Retro-V soft core is 43/55=78%:
     Check         I-XOR-01 ... OK
     Check        I-XORI-01 ... OK
     --------------------------------
-    FAIL: 12/55
+    FAIL: 10/55
 
 Current Design Statistics from iCEcube2 for iCE40UP5K FPGA:
 
-    Number of LUTs      	:	2157
-    Number of DFFs      	:	327
+    Number of LUTs      	:	2187
+    Number of DFFs      	:	324
     Number of DFFs packed to IO :	0
-    Number of Carrys    	:	269
+    Number of Carrys    	:	275
     Number of RAMs      	:	4
     Number of ROMs      	:	0
     Number of IOs       	:	35
@@ -105,7 +105,7 @@ Current Design Statistics from iCEcube2 for iCE40UP5K FPGA:
     Number of PLLs      	:	0
     Number of I2Cs      	:	0
     Number of SPIs      	:	0
-    Number of DSPs      	:	0
+    Number of DSPs     	:	0
     Number of SBIOODs     	:	0
     Number of LEDDAIPs     	:	0
     Number of RGBADRVs     	:	0
@@ -116,8 +116,8 @@ Current Design Statistics from iCEcube2 for iCE40UP5K FPGA:
 
     Device Utilization Summary
 
-    LogicCells                  :	2224/5280
-    PLBs                        :	352/660
+    LogicCells                  :	2265/5280
+    PLBs                        :	344/660
     BRAMs                       :	4/30
     IOs and GBIOs               :	36/36
     PLLs                        :	0/1
@@ -134,10 +134,9 @@ Current Design Statistics from iCEcube2 for iCE40UP5K FPGA:
 
 Performance Summary (as estimated by iCEcube2):
 
-    Worst slack in design: -3.656
+    Worst slack in design: -6.371
                        Requested     Estimated     Requested     Estimated                Clock        Clock                
     Starting Clock     Frequency     Frequency     Period        Period        Slack      Type         Group                
     ------------------------------------------------------------------------------------------------------------------------
-    retro|clk          48.3 MHz      40.9 MHz      20.716        24.436        -3.656     inferred     Autoconstr_clkgroup_0
+    retro|clk          48.4 MHz      29.9 MHz      20.681        33.423        -6.371     inferred     Autoconstr_clkgroup_0
     ========================================================================================================================
-

@@ -2,7 +2,7 @@
 // that is compilable by Verilator, capable to pass RV32I compliance tests
 // and compatible with RTOS Zephyr v1.13.0
 //
-// RETRO-V v1.0-Alpha4 (November 2018)
+// RETRO-V v1.0-Alpha5 (November 2018)
 //
 // Copyright 2018 Alexander Shabarshin <ashabarshin@gmail.com>
 //
@@ -67,7 +67,12 @@ always @(posedge clk) begin
                     inst <= { 24'h000000, inst[7:0] };
                  end
                  // 2nd stage of pipeline below
-                 rd2 <= rd;
+                 if(op[6:0]==7'b0) begin
+                    // in case of pipleine re-init
+                    rd2 <= 6'b0;
+                 end else begin
+                    rd2 <= rd;
+                 end
                  casez ( op )
                     10'b???0110111: // LUI
                        begin

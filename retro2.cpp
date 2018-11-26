@@ -184,7 +184,7 @@ int main(int argc, char** argv, char** env)
 #if 0
      cout << t << " nres=" << (int)top->nres << " clk=" << (int)top->clk << " address=" << hex << setw(4) << (int)top->address
           << " din=" << setw(2) << (int)top->data_in << " dout=" << setw(2) << (int)top->data_out << " wren=" << (int)top->wren
-          << " inst=" << setw(8) << (int)top->retro->inst << " rd=" << (int)top->retro->__PVT__rd
+          << " (" << (int)(top->address&3)+1 << ") inst=" << setw(8) << (int)top->retro->inst << " rd=" << (int)top->retro->__PVT__rd << " rd2=" << (int)top->retro->__PVT__rd2
           << " arg1=" << setw(8) << (int)top->retro->arg1 << " arg2=" << setw(8) << (int)top->retro->arg2 << " imm=" << setw(8) << (int)top->retro->imm
           << " pc=" << setw(8) << (int)top->retro->__PVT__pc << " pc2=" << setw(8) << (int)top->retro->__PVT__pc2
           << " x1=" << setw(8) << (int)top->retro->__PVT__regs[1]
