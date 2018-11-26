@@ -1,8 +1,8 @@
 // retro.v - very simplistic implementation of RISC-V architecture RV32I
-// that is compilable by Verilator, capable to pass RV32I compliance tests
-// and compatible with RTOS Zephyr v1.13.0
+// that is compilable by Verilator and passing 45 RV32I compliance tests
+// out of 55 (no CSRs, no priviledged mode, no traps etc)
 //
-// RETRO-V v1.0-Alpha5 (November 2018)
+// RETRO-V v1.0.0 (November 2018)
 //
 // Copyright 2018 Alexander Shabarshin <ashabarshin@gmail.com>
 //
@@ -18,12 +18,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// THIS IS STILL WORK IN PROGRESS!!! NOT YET READY FOR TESTS OR ZEPHYR!
-
 module retro (nres,clk,hold,address,data_in,data_out,wren);
 
 parameter ADDRESS_WIDTH = 16;       // address bus width
-parameter REGISTERS_NUM = 64;       // number of registers (32+16=48)
+parameter REGISTERS_NUM = 32;       // number of registers
 input nres;                         // external negative reset
 input clk;                          // external clock
 input hold;                         // external hold
@@ -47,7 +45,7 @@ reg [31:0] pc;  // program counter
 reg [31:0] pc2; // stored program counter
 reg [31:0] res; // result register
 reg [9:0] op;   // extended opcode
-reg [5:0] rd,rd2; // destination register ids
+reg [4:0] rd,rd2; // destination register ids
 reg [2:0] lbytes; // current number of bytes to load
 reg [2:0] sbytes; // current number of bytes to store
 reg [1:0] bytes;  // total number of bytes to transfer (3 means 4)
@@ -69,7 +67,7 @@ always @(posedge clk) begin
                  // 2nd stage of pipeline below
                  if(op[6:0]==7'b0) begin
                     // in case of pipleine re-init
-                    rd2 <= 6'b0;
+                    rd2 <= 5'b0;
                  end else begin
                     rd2 <= rd;
                  end
@@ -91,7 +89,7 @@ always @(posedge clk) begin
                                pc2 <= pc2 + imm;
                                pcflag <= 1'b1; // set pc-change event
                                op <= 10'b0; // !!!
-                               if(rd!=6'b0) begin
+                               if(rd!=5'b0) begin
                                   regs[rd] <= pc; // this is pc+4 stored to rd
                                end
                                res <= 32'b0;
@@ -101,7 +99,7 @@ always @(posedge clk) begin
                                pc2 <= arg1 + imm;
                                pcflag <= 1'b1; // set pc-change event
                                op <= 10'b0; // !!!
-                               if(rd!=6'b0) begin
+                               if(rd!=5'b0) begin
                                   regs[rd] <= pc; // this is pc+4 stored to rd
                                end
                                res <= 32'b0;
@@ -493,9 +491,9 @@ always @(posedge clk) begin
           2'b01: begin // 2nd byte of the instruction (fill op and rd)
                  inst <= { 16'h0000, data_in, inst[7:0] };
                  if(inst[6:0]==7'b0100011 || inst[6:0]==7'b1100011) begin
-                    rd <= 6'b0; // STORE and BRANCH special case
+                    rd <= 5'b0; // STORE and BRANCH special case
                  end else begin
-                    rd <= { 1'b0, data_in[3:0], inst[7] };
+                    rd <= { data_in[3:0], inst[7] };
                  end
                  flag <= data_in[7];
                  op <= { data_in[6:4], inst[6:0] };
@@ -560,7 +558,7 @@ always @(posedge clk) begin
                        end
                  endcase
                  // 2nd step of 2nd stage of pipeline below
-                 if(rd2!=6'b0) begin // it has to be rd2 otherwise it wastes 1K+ LUTs in iCEcube2
+                 if(rd2!=5'b0) begin // it has to be rd2 otherwise it wastes 1K+ LUTs in iCEcube2
                      regs[rd2] <= res; // write back
                  end
                  end
@@ -577,7 +575,7 @@ always @(posedge clk) begin
                      10'b0011110011,
                      10'b0101110011,
                      10'b0111110011:
-                        arg1 <= regs[ { 1'b0, data_in[3:0], flag } ]; // value from rs1
+                        arg1 <= regs[ { data_in[3:0], flag } ]; // value from rs1
                      10'b1011110011,
                      10'b1101110011,
                      10'b1111110011:
@@ -613,7 +611,7 @@ always @(posedge clk) begin
                           end else begin
                             imm <= { 20'b00000000000000000000, inst[7], data_in[6:1], inst[11:8], 1'b0 }; // 13-bit immediate (negative)
                           end
-                          arg2 <= regs[ { 1'b0, data_in[0], arg2[3:0] } ]; // value from rs2
+                          arg2 <= regs[ { data_in[0], arg2[3:0] } ]; // value from rs2
                         end
                      10'b???0100011:
                         begin // S-type
@@ -622,7 +620,7 @@ always @(posedge clk) begin
                           end else begin
                             imm <= { 21'b000000000000000000000, data_in[6:1], inst[11:7] }; // 12-bit immediate (positive)
                           end
-                          arg2 <= regs[ { 1'b0, data_in[0], arg2[3:0] } ]; // value from rs2
+                          arg2 <= regs[ { data_in[0], arg2[3:0] } ]; // value from rs2
                         end
                      10'b0010010011,10'b1010010011:
                         begin // shifts
@@ -632,7 +630,7 @@ always @(posedge clk) begin
                      10'b???0110011:
                         begin // R-type
                           imm <= 32'h00000000;
-                          arg2 <= regs[ { 1'b0, data_in[0], arg2[3:0] } ]; // value from rs2
+                          arg2 <= regs[ { data_in[0], arg2[3:0] } ]; // value from rs2
                         end
                      default: // I-type
                         begin
