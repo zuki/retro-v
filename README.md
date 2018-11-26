@@ -43,8 +43,8 @@ from 1 to 5 extra cycles) and next instruction in pipeline is kind of frozen bet
 
 If we count only "visible" cycles (from the beginning of one instructions to the beginning of the next one) then:
 
-* **JAL/JALR** take 5 cycles always (because of branching)
-* **BEQ/BNE/BLT/BGE/BLTU/BGEU** take 4 cycles if condition is false (no branching) or 5 cycles if true
+* **JAL/JALR** take 5 cycles always (because of jump)
+* **BEQ/BNE/BLT/BGE/BLTU/BGEU** take 4 cycles if condition is false (no jump) or 5 cycles if true
 * **LB/LBU** take 5 cycles (because of 1 extra cycle to read 1 byte from memory)
 * **LH/LHU** take 6 cycles (because of 2 extra cycles to read 2 bytes from memory)
 * **LW** takes 8 cycles (because of 4 extra cycles to read 4 bytes from memory)
