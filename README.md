@@ -20,7 +20,7 @@ and distributed as fully open sourced Verilog single file soft core under Apache
     // See the License for the specific language governing permissions and
     // limitations under the License.
 
-THIS IS STILL WORK IN PROGRESS!!! NOT YET READY FOR 100% COMPLIANCE OR ZEPHYR!
+**THIS IS STILL WORK IN PROGRESS!!! NOT YET READY FOR 100% COMPLIANCE OR ZEPHYR!**
 
 This design has 2-stage pipeline with 4 cycles per stage, so on average every instruction
 takes 4 cycles (with 40 MHz clock it will be 10 millions instructions per sec max).
@@ -41,6 +41,9 @@ Description of cycles in 2-stage pipeline:
 * **Cycle 4** (overlapped with *Cycle 1* of the next instruction) - Execute complete instruction (with optional write back in case of branching)
 
 * **Cycle 5** (overlapped with *Cycle 2* of the next instruction) - Write back to register file if destination register is not 0
+
+As you can see core reads from register file in cycles 3 and 4 and write to register file in cycles 1 and 2 (the same as 4 and 5 for 2nd stage of pipeline)
+that fact allows us to implement register file by block memory inside FPGA.
 
 In case of branching (BRANCH or JAL/JAR) next instruction from pipeline alread performed 1st cycle, so it stops right there and
 next cycle is 1st one from new address effectively re-initing the pipeline (so branch penalty is only 1 cycle).
