@@ -2,3 +2,4 @@ rm -rf obj_dir
 verilator -Wall --cc retro.v --exe retro1.cpp
 make -j -C obj_dir -f Vretro.mk
 obj_dir/Vretro >out
+
