@@ -1,8 +1,8 @@
 # Retro-V v1.0
 Retro-V is a SoftCPU in Verilog created by Shaos (completely from scratch)
 that implements RISC-V architecture RV32I (32-bit integer), but with 8-bit databus
-to resemble a retro 8-bit microprocessor suitable for DIY computers
-( like "nedoPC-5" for example: https://gitlab.com/nedopc/npc5 ).
+to resemble a retro 8-bit microprocessors suitable for building DIY computers
+around it ( like "nedoPC-5" for example: https://gitlab.com/nedopc/npc5 ).
 Retro-V is capable of passing RV32I compliance tests (now 82%), compatible with RTOS Zephyr (not yet there)
 and distributed as fully open sourced Verilog single file soft core under Apache License:
 
@@ -22,24 +22,14 @@ and distributed as fully open sourced Verilog single file soft core under Apache
 
 **THIS IS STILL WORK IN PROGRESS!!! NOT YET READY FOR 100% COMPLIANCE OR ZEPHYR!**
 
-This design has 2-stage pipeline with 4 cycles per stage, so on average every instruction
-takes 4 cycles (with 40 MHz clock it will be 10 millions instructions per sec max).
-Branches and Jump-and-Links takes 1 cycle more (5 cycles total).
-Loads: LB - 5 cycles, LH - 6 cycles, LW - 8 cycles.
-Stores: SB - 6 cycles, SH - 7 cycles, SW - 9 cycles (1 more than loads).
-
-Description of cycles in 2-stage pipeline of Retro-V core:
+Retro-V soft core has 2-stage pipeline with 4 cycles per stage, so on average every instruction
+takes 4 cycles (with 40 MHz clock it will be 10 millions instructions per sec max):
 
 * **Cycle 1** - Fetch 1st byte of the instruction (lowest one)
-
 * **Cycle 2** - Fetch 2nd byte of the instruction, determine destination register (rd) and check if instruction is valid
-
 * **Cycle 3** - Fetch 3rd byte of the instruction, read 1st argument from register file (if needed)
-
 * **Cycle 4** - Fetch 4th byte of the instruction (highest one), read 2nd argument from register file (if needed), decode immediate value (if needed)
-
 * **Cycle 5** (overlapped with *Cycle 1* of the next instruction) - Execute complete instruction (with optional write back in case of branching)
-
 * **Cycle 6** (overlapped with *Cycle 2* of the next instruction) - Write back to register file if destination register is not 0
 
 As you can see Retro-V core reads from register file in cycles 3 and 4 and write to register file in cycles 1 and 2 (the same as 5 and 6 for 2nd stage of pipeline).
@@ -50,6 +40,18 @@ In case of branching (BRANCH or JAL/JAR) next instruction from pipeline alread p
 so it stops right there and next cycle is 1st one from new address effectively re-initing the pipeline (so branch penalty is only 1 cycle).
 In case of memory access (LOAD or STORE) state machine stays in cycle 4 for a while (to load or store bytes from/to memory one by one wasting
 from 1 to 5 extra cycles) and next instruction in pipeline is kind of frozen between cycle 1 and cycle 2 in the same time.
+
+If we count only "visible" cycles (from the beginning of one instructions to the beginning of the next one) then:
+
+* JAL/JALR take 5 cycles always (because of branching)
+* BEQ/BNE/BLT/BGE/BLTU/BGEU take 4 cycles if condition is false (no branching) or 5 cycles if true
+* LB/LBU take 5 cycles (because of 1 extra cycle to read 1 byte from memory)
+* LH/LHU take 6 cycles (because of 2 extra cycles to read 2 bytes from memory)
+* LW takes 8 cycles (because of 4 extra cycles to read 4 bytes from memory)
+* SB takes 6 cycles (because of 1 extra cycle to write 1 byte to memory and 1 preparational cycle)
+* SH takes 7 cycles (because of 2 extra cycles to read 2 bytes from memory and 1 preparational cycle)
+* SW takes 9 cycles (because of 4 extra cycles to read 4 bytes from memory and 1 preparational cycle)
+* Everything else takes 4 cycles (plus 2 hidden cycles on the 2nd stage of pipeline)
 
 ## Compliance tests
 
