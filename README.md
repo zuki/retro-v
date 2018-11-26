@@ -36,13 +36,13 @@ Description of cycles in 2-stage pipeline:
 
 * **Cycle 3** - Fetch 3rd byte of the instruction, read 1st argument from register file (if needed)
 
-* **Cycle 3** - Fetch 4th byte of the instruction (highest one), read 2nd argument from register file (if needed), decode immediate value (if needed)
+* **Cycle 4** - Fetch 4th byte of the instruction (highest one), read 2nd argument from register file (if needed), decode immediate value (if needed)
 
-* **Cycle 4** (overlapped with *Cycle 1* of the next instruction) - Execute complete instruction (with optional write back in case of branching)
+* **Cycle 5** (overlapped with *Cycle 1* of the next instruction) - Execute complete instruction (with optional write back in case of branching)
 
-* **Cycle 5** (overlapped with *Cycle 2* of the next instruction) - Write back to register file if destination register is not 0
+* **Cycle 6** (overlapped with *Cycle 2* of the next instruction) - Write back to register file if destination register is not 0
 
-As you can see core reads from register file in cycles 3 and 4 and write to register file in cycles 1 and 2 (the same as 4 and 5 for 2nd stage of pipeline)
+As you can see Retro-V core reads from register file in cycles 3 and 4 and write to register file in cycles 1 and 2 (the same as 5 and 6 for 2nd stage of pipeline)
 that fact allows us to implement register file by block memory inside FPGA.
 
 In case of branching (BRANCH or JAL/JAR) next instruction from pipeline alread performed 1st cycle, so it stops right there and
