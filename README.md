@@ -28,22 +28,25 @@ Branches and Jump-and-Links takes 1 cycle more (5 cycles total).
 Loads: LB - 5 cycles, LH - 6 cycles, LW - 8 cycles.
 Stores: SB - 6 cycles, SH - 7 cycles, SW - 9 cycles (1 more than loads).
 
-**Cycle 1** - Fetch 1st byte of the instruction (lowest one)
+Description of cycles in 2-stage pipeline:
 
-**Cycle 2** - Fetch 2nd byte of the instruction, determine destination register (rd) and check if instruction is valid
+* **Cycle 1** - Fetch 1st byte of the instruction (lowest one)
 
-**Cycle 3** - Fetch 3rd byte of the instruction, read 1st argument from register file (if needed)
+* **Cycle 2** - Fetch 2nd byte of the instruction, determine destination register (rd) and check if instruction is valid
 
-**Cycle 3** - Fetch 4th byte of the instruction (highest one), read 2nd argument from register file (if needed), decode immediate value (if needed)
+* **Cycle 3** - Fetch 3rd byte of the instruction, read 1st argument from register file (if needed)
 
-**Cycle 4** (overlapped with *Cycle 1* of the next instruction) - Execute complete instruction (write back in case of branching)
+* **Cycle 3** - Fetch 4th byte of the instruction (highest one), read 2nd argument from register file (if needed), decode immediate value (if needed)
 
-**Cycle 5** (overlapped with *Cycle 2* of the next instruction) - Write back to register file if destination register is not 0
+* **Cycle 4** (overlapped with *Cycle 1* of the next instruction) - Execute complete instruction (with optional write back in case of branching)
 
-In case of branching (BRANCH or JAL/JAR) next instruction alread performed 1st cycle, so it stops there and next cycle is 1st one from new address.
+* **Cycle 5** (overlapped with *Cycle 2* of the next instruction) - Write back to register file if destination register is not 0
+
+In case of branching (BRANCH or JAL/JAR) next instruction from pipeline alread performed 1st cycle, so it stops right there and
+next cycle is 1st one from new address effectively re-initing the pipeline (so branch penalty is only 1 cycle).
 
 In case of memory access (LOAD or STORE) state machine stays in cycle 4 for a while (to load or store bytes from/to memory one by one wasting
-from 1 to 5 extra cycles and next instruction is kind of frozen between cycle 1 and cycle 2).
+from 1 to 5 extra cycles) and next instruction in pipeline is kind of frozen between cycle 1 and cycle 2 in the same time.
 
 ## Compliance tests
 
