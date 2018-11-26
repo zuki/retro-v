@@ -28,22 +28,24 @@ Branches and Jump-and-Links takes 1 cycle more (5 cycles total).
 Loads: LB - 5 cycles, LH - 6 cycles, LW - 8 cycles.
 Stores: SB - 6 cycles, SH - 7 cycles, SW - 9 cycles (1 more than loads).
 
-Cycle 1 - Fetch 1st byte of the instruction (lowest one)
+'''Cycle 1''' - Fetch 1st byte of the instruction (lowest one)
 
-Cycle 2 - Fetch 2nd byte of the instruction, determine destination register (rd) and check if instruction is valid
+'''Cycle 2''' - Fetch 2nd byte of the instruction, determine destination register (rd) and check if instruction is valid
 
-Cycle 3 - Fetch 3rd byte of the instruction, read 1st argument from register file (if needed)
+'''Cycle 3''' - Fetch 3rd byte of the instruction, read 1st argument from register file (if needed)
 
-Cycle 3 - Fetch 4th byte of the instruction (highest one), read 2nd argument from register file (if needed), decode immediate value (if needed)
+'''Cycle 3''' - Fetch 4th byte of the instruction (highest one), read 2nd argument from register file (if needed), decode immediate value (if needed)
 
-Cycle 4 (overlapped with cycle 1 of the next instruction) - Execute complete instruction (write back in case of branching)
+'''Cycle 4''' (overlapped with ''Cycle 1'' of the next instruction) - Execute complete instruction (write back in case of branching)
 
-Cycle 5 (overlapped with cycle 2 of the next instruction) - Write back to register file if destination register is not 0
+'''Cycle 5''' (overlapped with ''Cycle 2'' of the next instruction) - Write back to register file if destination register is not 0
 
 In case of branching (BRANCH or JAL/JAR) next instruction alread performed 1st cycle, so it stops there and next cycle is 1st one from new address.
 
 In case of memory access (LOAD or STORE) state machine stays in cycle 4 for a while (to load or store bytes from/to memory one by one wasting
 from 1 to 5 extra cycles and next instruction is kind of frozen between cycle 1 and cycle 2).
+
+## Compliance tests
 
 RV32I compliance tests were found here: https://github.com/riscv/riscv-compliance/
 
@@ -106,6 +108,8 @@ Current compliance tests status for Retro-V soft core is 45/55=81.8%:
     Check        I-XORI-01 ... OK
     --------------------------------
     FAIL: 10/55
+
+## FPGA implementation
 
 Current Design Statistics from iCEcube2 for iCE40UP5K FPGA:
 
