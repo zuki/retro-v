@@ -2,7 +2,7 @@
 // that is compilable by Verilator, capable to pass RV32I compliance tests
 // and compatible with RTOS Zephyr v1.13.0
 //
-// RETRO-V v1.1-Alpha (November 2018)
+// RETRO-V v1.1-Alpha2 (November 2018)
 //
 // Copyright 2018 Alexander Shabarshin <ashabarshin@gmail.com>
 //
@@ -59,8 +59,13 @@ reg [31:0] counterh; // higher part of the counter
 reg countercarry; // carry bit from lower to higher
 reg flag,pcflag,unflag,errop/*verilator public*/; // flags
 reg [1:0] level; // 00=U 01=S 10=H 11=M
-reg mip_mtip,mip_ssip,mip_stip;
-reg [31:0] mscratch;
+reg mip_meip,mip_seip,mip_mtip,mip_stip,mip_msip,mip_ssip;
+reg mie_meie,mie_seie,mie_mtie,mie_stie,mie_msie,mie_ssie;
+reg [1:0] mst_xs,mst_fs,mst_mpp;
+reg mst_uie,mst_sie,mst_mie,mst_upie,mst_spie,mst_mpie,mst_spp,mst_mprv,mst_sum,mst_mxr;
+reg [31:0] sepc,mscratch,mepc,mtval,mtvec;
+reg [3:0] mcause;
+reg mcausei; // highest bit of mcause
 
 assign address = (lbytes!=3'b0||sbytes!=3'b0)?extaddr[ADDRESS_WIDTH-1:0]:pc[ADDRESS_WIDTH-1:0];
 
@@ -520,14 +525,55 @@ always @(posedge clk) begin
                        end
                     10'b0001110011: // ECALL, EBREAK and other priviledged instructions
                        begin
+                          case(imm[11:0])
+//                          12'b000000000000: // ECALL
+
+//                          12'b000000000001: // EBREAK
+
+                          12'b000100000010: // SRET
+                             begin
+                               if(mst_spp) begin
+                                  mst_sie <= mst_spie;
+                               end else begin
+                                  mst_uie <= mst_spie;
+                               end
+                               mst_spie <= 1'b1;
+                               mst_spp <= 1'b0;
+                               level <= { 1'b0, mst_spp };
+                               pc2 <= sepc;
+                               pcflag <= 1'b1; // set pc-change event
+                               op <= 10'b0; // !!!
+                               res <= 32'b0;
+                             end
+                          12'b001100000010: // MRET
+                             begin
+                               case(mst_mpp)
+                                2'b00: mst_uie <= mst_mpie;
+                                2'b01: mst_sie <= mst_mpie;
+                                default: mst_mie <= mst_mpie;
+                               endcase
+                               mst_mpie <= 1'b1;
+                               mst_mpp <= 2'b00;
+                               level <= mst_mpp;
+                               pc2 <= mepc;
+                               pcflag <= 1'b1; // set pc-change event
+                               op <= 10'b0; // !!!
+                               res <= 32'b0;
+                             end
+                          default: // WFI and SPENCE.VMA work as NOP
+                             begin
                                pc2 <= pc;
                                pcflag <= 1'b0;
                                res <= 32'b0;
+                             end
+                          endcase
                        end
                     10'b?011110011, // CSRRW or CSRRWI
                     10'b?101110011, // CSRRS or CSRRSI
                     10'b?111110011: // CSRRC or CSRRCI
                        begin
+                        pc2 <= pc;
+                        pcflag <= 1'b0;
                         if((op[8:7]==2'b01 && imm[11:10]==2'b11) || level < imm[9:8]) begin
                           errop <= 1'b1;
                         end else begin
@@ -544,8 +590,122 @@ always @(posedge clk) begin
                                     begin
                                        res <= counterh;
                                     end
+                            12'h100,12'h300: // sstatus/mstatus
+                                    begin
+                                       res <= { (mst_fs==2'b11||(~imm[9]&&mst_xs==2'b11))?1'b1:1'b0, 8'b0,
+                                                1'b0/*TSR*/, 1'b0/*TW*/, 1'b0/*TVM*/, mst_mxr, mst_sum, mst_mprv&imm[9],
+                                                imm[9]?2'b0:mst_xs, mst_fs, imm[9]?mst_mpp:2'b0, 2'b0, mst_spp,
+                                                mst_mpie&imm[9], 1'b0, mst_spie, mst_upie,
+                                                mst_mie&imm[9], 1'b0, mst_sie, mst_uie };
+                                       if(op[8:7]==2'b10) begin
+                                          if(imm[9]) begin // mstatus only
+                                             mst_mprv <= mst_mprv | arg1[17];
+                                             mst_mpp <= mst_mpp | arg1[12:11];
+                                             mst_mpie <= mst_mpie | arg1[7];
+                                             mst_mie <= mst_mie | arg1[3];
+                                          end else begin // sstatus only
+                                             mst_xs <= mst_xs | arg1[16:15];
+                                          end
+                                          mst_mxr <= mst_mxr | arg1[19];
+                                          mst_sum <= mst_sum | arg1[18];
+                                          mst_fs <= mst_fs | arg1[14:13];
+                                          mst_spp <= mst_spp | arg1[8];
+                                          mst_spie <= mst_spie | arg1[7];
+                                          mst_upie <= mst_upie | arg1[4];
+                                          mst_sie <= mst_sie | arg1[1];
+                                          mst_uie <= mst_uie | arg1[0];
+                                       end else begin
+                                          if(op[8:7]==2'b11) begin
+                                             if(imm[9]) begin // mstatus only
+                                                mst_mprv <= mst_mprv & ~arg1[17];
+                                                mst_mpp <= mst_mpp & ~arg1[12:11];
+                                                mst_mpie <= mst_mpie & ~arg1[7];
+                                                mst_mie <= mst_mie & ~arg1[3];
+                                             end else begin // sstatus only
+                                                mst_xs <= mst_xs & ~arg1[16:15];
+                                             end
+                                             mst_mxr <= mst_mxr & ~arg1[19];
+                                             mst_sum <= mst_sum & ~arg1[18];
+                                             mst_fs <= mst_fs & ~arg1[14:13];
+                                             mst_spp <= mst_spp & ~arg1[8];
+                                             mst_spie <= mst_spie & ~arg1[7];
+                                             mst_upie <= mst_upie & ~arg1[4];
+                                             mst_sie <= mst_sie & ~arg1[1];
+                                             mst_uie <= mst_uie & ~arg1[0];
+                                          end else begin
+                                             if(imm[9]) begin // mstatus only
+                                                mst_mprv <= arg1[17];
+                                                mst_mpp <= arg1[12:11];
+                                                mst_mpie <= arg1[7];
+                                                mst_mie <= arg1[3];
+                                             end else begin // sstatus only
+                                                mst_xs <= arg1[16:15];
+                                             end
+                                             mst_mxr <= arg1[19];
+                                             mst_sum <= arg1[18];
+                                             mst_fs <= arg1[14:13];
+                                             mst_spp <= arg1[8];
+                                             mst_spie <= arg1[7];
+                                             mst_upie <= arg1[4];
+                                             mst_sie <= arg1[1];
+                                             mst_uie <= arg1[0];
+                                          end
+                                       end
+                                    end
+                            12'h141: // sepc
+                                    begin
+                                       res <= sepc;
+                                       if(op[8:7]==2'b10) begin
+                                          sepc <= sepc | arg1;
+                                       end else begin
+                                          if(op[8:7]==2'b11) begin
+                                             sepc <= sepc & ~arg1;
+                                          end else begin
+                                             sepc <= arg1; // & ~1 ???
+                                          end
+                                       end
+                                    end
+                            12'h304: // mie
+                                    begin
+                                       res <= { 22'b0, mie_seie, 1'b0, mie_mtie, 1'b0, mie_stie, 1'b0, mie_msie, 1'b0, mie_ssie, 1'b0 };
+                                       if(op[8:7]==2'b10) begin
+                                          mie_seie <= mie_seie | arg1[9];
+                                          mie_mtie <= mie_mtie | arg1[7];
+                                          mie_stie <= mie_stie | arg1[5];
+                                          mie_msie <= mie_msie | arg1[3];
+                                          mie_ssie <= mie_ssie | arg1[1];
+                                       end else begin
+                                          if(op[8:7]==2'b11) begin
+                                             mie_seie <= mie_seie & ~arg1[9];
+                                             mie_mtie <= mie_mtie & ~arg1[7];
+                                             mie_stie <= mie_stie & ~arg1[5];
+                                             mie_msie <= mie_msie & ~arg1[3];
+                                             mie_ssie <= mie_ssie & ~arg1[1];
+                                          end else begin
+                                             mie_seie <= arg1[9];
+                                             mie_mtie <= arg1[7];
+                                             mie_stie <= arg1[5];
+                                             mie_msie <= arg1[3];
+                                             mie_ssie <= arg1[1];
+                                          end
+                                       end
+                                    end
+                            12'h305: // mtvec
+                                    begin
+                                       res <= mtvec;
+                                       if(op[8:7]==2'b10) begin
+                                          mtvec <= mtvec | arg1;
+                                       end else begin
+                                          if(op[8:7]==2'b11) begin
+                                             mtvec <= mtvec & ~arg1;
+                                          end else begin
+                                             mtvec <= arg1; // & ~3 ???
+                                          end
+                                       end
+                                    end
                             12'h340: // mscratch
                                     begin
+                                       res <= mscratch;
                                        if(op[8:7]==2'b10) begin
                                           mscratch <= mscratch | arg1;
                                        end else begin
@@ -555,13 +715,64 @@ always @(posedge clk) begin
                                              mscratch <= arg1;
                                           end
                                        end
-                                       res <= mscratch;
+                                    end
+                            12'h341: // mepc
+                                    begin
+                                       res <= mepc;
+                                       if(op[8:7]==2'b10) begin
+                                          mepc <= mepc | arg1;
+                                       end else begin
+                                          if(op[8:7]==2'b11) begin
+                                             mepc <= mepc & ~arg1;
+                                          end else begin
+                                             mepc <= arg1;
+                                          end
+                                       end
+                                    end
+                            12'h342: // mcause
+                                    begin
+                                       res <= {mcausei, 27'b0, mcause};
+                                       if(op[8:7]==2'b10) begin
+                                          mcause <= mcause | arg1[3:0];
+                                          mcausei <= mcausei | arg1[31];
+                                       end else begin
+                                          if(op[8:7]==2'b11) begin
+                                             mcause <= mcause & ~arg1[3:0];
+                                             mcausei <= mcausei | arg1[31];
+                                          end else begin
+                                             mcause <= arg1[3:0];
+                                             mcausei <= arg1[31];
+                                          end
+                                       end
+                                    end
+                            12'h343: // mtval
+                                    begin
+                                       res <= mtval;
+                                       if(op[8:7]==2'b10) begin
+                                          mtval <= mtval | arg1;
+                                       end else begin
+                                          if(op[8:7]==2'b11) begin
+                                             mtval <= mtval & ~arg1;
+                                          end else begin
+                                             mtval <= arg1;
+                                          end
+                                       end
                                     end
                             12'h344: // mip
                                     begin
-                                       mip_ssip <= arg1[1];
-                                       mip_stip <= arg1[5];
                                        res <= { 24'b0, mip_mtip, 1'b0, mip_stip, 3'b0, mip_ssip, 1'b0 };
+                                       if(op[8:7]==2'b10) begin
+                                          mip_ssip <= mip_ssip | arg1[1];
+                                          mip_stip <= mip_stip | arg1[5];
+                                       end else begin
+                                          if(op[8:7]==2'b11) begin
+                                             mip_ssip <= mip_ssip & ~arg1[1];
+                                             mip_stip <= mip_stip & ~arg1[5];
+                                          end else begin
+                                             mip_ssip <= arg1[1];
+                                             mip_stip <= arg1[5];
+                                          end
+                                       end
                                     end
                             default:
                                     begin
@@ -772,6 +983,8 @@ level=2'b11;
 mip_mtip=1'b0;
 mip_ssip=1'b0;
 mip_stip=1'b0;
+mst_mie=1'b0;
+mst_mprv=1'b0;
 end
 
 endmodule
