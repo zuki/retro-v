@@ -1,8 +1,8 @@
 // retro.v - very simplistic implementation of RISC-V architecture RV32I
-// that is compilable by Verilator and passing 45 RV32I compliance tests
-// out of 55 (no CSRs, no priviledged mode, no traps etc)
+// that is compilable by Verilator, capable to pass RV32I compliance tests
+// and compatible with RTOS Zephyr v1.13.0
 //
-// RETRO-V v1.0.0 (November 2018)
+// RETRO-V v1.1-Alpha (November 2018)
 //
 // Copyright 2018 Alexander Shabarshin <ashabarshin@gmail.com>
 //
@@ -17,6 +17,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+// THIS IS STILL WORK IN PROGRESS!!! NOT YET READY FOR TESTS OR ZEPHYR!
 
 module retro (nres,clk,hold,address,data_in,data_out,wren);
 
@@ -50,7 +52,15 @@ reg [2:0] lbytes; // current number of bytes to load
 reg [2:0] sbytes; // current number of bytes to store
 reg [1:0] bytes;  // total number of bytes to transfer (3 means 4)
 reg [31:0] extaddr; // external address
+reg [31:0] comparel; // lower part of compare register
+reg [31:0] compareh; // higher part of compare register
+reg [31:0] counterl; // lower part of the counter
+reg [31:0] counterh; // higher part of the counter
+reg countercarry; // carry bit from lower to higher
 reg flag,pcflag,unflag,errop/*verilator public*/; // flags
+reg [1:0] level; // 00=U 01=S 10=H 11=M
+reg mip_mtip,mip_ssip,mip_stip;
+reg [31:0] mscratch;
 
 assign address = (lbytes!=3'b0||sbytes!=3'b0)?extaddr[ADDRESS_WIDTH-1:0]:pc[ADDRESS_WIDTH-1:0];
 
@@ -181,24 +191,59 @@ always @(posedge clk) begin
                                pc2 <= pc;
                                pcflag <= 1'b0;
                                if(sbytes==3'b0 && lbytes==3'b0) begin
-                                 extaddr <= arg1+imm;
-                                 if(op[5]==0) begin // LOAD
-                                   lbytes <= (op[8:7]==2'b00)?3'b001:
-                                             (op[8:7]==2'b01)?3'b010:
-                                             (op[8:7]==2'b10)?3'b100:3'b0;
-                                   bytes  <= (op[8:7]==2'b00)?2'b01:
-                                             (op[8:7]==2'b01)?2'b10:
-                                             (op[8:7]==2'b10)?2'b11:2'b0;
-                                   unflag <= op[9];
-                                 end else begin // STORE
-                                   sbytes <= (op[8:7]==2'b00)?3'b010:
-                                             (op[8:7]==2'b01)?3'b011:
-                                             (op[8:7]==2'b10)?3'b101:3'b0;
-                                   bytes  <= (op[8:7]==2'b00)?2'b01:
-                                             (op[8:7]==2'b01)?2'b10:
-                                             (op[8:7]==2'b10)?2'b11:2'b0;
-                                 end
-                                 res <= 32'b0;
+                                 case (arg1+imm)
+                                 MTIME_ADDR:
+                                   begin
+                                    if(op[5]==0) begin // LOAD from MTIME_ADDR
+                                      res <= counterl;
+                                    end
+                                   end
+                                 MTIME_ADDR+4:
+                                   begin
+                                    if(op[5]==0) begin // LOAD from MTIME_ADDR+4
+                                      res <= counterh;
+                                    end
+                                   end
+                                 MTIMECMP_ADDR:
+                                   begin
+                                    if(op[5]==0) begin // LOAD from MTIMECMP_ADDR
+                                      res <= comparel;
+                                    end else begin // STORE
+                                      comparel <= arg2;
+                                      mip_mtip <= 1'b0;
+                                    end
+                                   end
+                                 MTIMECMP_ADDR+4:
+                                   begin
+                                    if(op[5]==0) begin // LOAD from MTIMECMP_ADDR+4
+                                      res <= compareh;
+                                    end else begin // STORE
+                                      compareh <= arg2;
+                                      mip_mtip <= 1'b0;
+                                    end
+                                   end
+                                 default: // regular access to external memory
+                                   begin
+                                    extaddr <= arg1+imm;
+                                    if(op[5]==0) begin // LOAD
+                                      lbytes <= (op[8:7]==2'b00)?3'b001:
+                                                (op[8:7]==2'b01)?3'b010:
+                                                (op[8:7]==2'b10)?3'b100:3'b0;
+                                      bytes  <= (op[8:7]==2'b00)?2'b01:
+                                                (op[8:7]==2'b01)?2'b10:
+                                                (op[8:7]==2'b10)?2'b11:2'b0;
+                                      unflag <= op[9];
+                                    end else begin // STORE
+                                      sbytes <= (op[8:7]==2'b00)?3'b010:
+                                                (op[8:7]==2'b01)?3'b011:
+                                                (op[8:7]==2'b10)?3'b101:3'b0;
+                                      bytes  <= (op[8:7]==2'b00)?2'b01:
+                                                (op[8:7]==2'b01)?2'b10:
+                                                (op[8:7]==2'b10)?2'b11:2'b0;
+                                    end
+                                    res <= 32'b0;
+                                   end
+                                 endcase
                                end else begin // memory transfer in progress
                                  if(op[5]==0) begin // LOAD
                                    extaddr <= extaddr + 1'b1;
@@ -479,6 +524,52 @@ always @(posedge clk) begin
                                pcflag <= 1'b0;
                                res <= 32'b0;
                        end
+                    10'b?011110011, // CSRRW or CSRRWI
+                    10'b?101110011, // CSRRS or CSRRSI
+                    10'b?111110011: // CSRRC or CSRRCI
+                       begin
+                        if((op[8:7]==2'b01 && imm[11:10]==2'b11) || level < imm[9:8]) begin
+                          errop <= 1'b1;
+                        end else begin
+                          case (imm[11:0])
+                            12'hB00,12'hC00, // [m]cycle
+                                    12'hC01, // time
+                            12'hB03,12'hC03: // [m]instret
+                                    begin
+                                       res <= counterl;
+                                    end
+                            12'hB80,12'hC80, // [m]cycleh
+                                    12'hC81, // timeh
+                            12'hB83,12'hC83: // [m]instreth
+                                    begin
+                                       res <= counterh;
+                                    end
+                            12'h340: // mscratch
+                                    begin
+                                       if(op[8:7]==2'b10) begin
+                                          mscratch <= mscratch | arg1;
+                                       end else begin
+                                          if(op[8:7]==2'b11) begin
+                                             mscratch <= mscratch & ~arg1;
+                                          end else begin
+                                             mscratch <= arg1;
+                                          end
+                                       end
+                                       res <= mscratch;
+                                    end
+                            12'h344: // mip
+                                    begin
+                                       mip_ssip <= arg1[1];
+                                       mip_stip <= arg1[5];
+                                       res <= { 24'b0, mip_mtip, 1'b0, mip_stip, 3'b0, mip_ssip, 1'b0 };
+                                    end
+                            default:
+                                    begin
+                                       res <= 32'h00000000;
+                                    end
+                          endcase
+                        end
+                       end
                     default: // FENCE and FENCE.I go here as NOPs
                        begin
                                pc2 <= pc; // this is actually store in the 1st stage to use in the 2nd
@@ -584,6 +675,7 @@ always @(posedge clk) begin
                         arg1 <= 32'h00000000;
                  endcase
                  arg2 <= { 28'b0, data_in[7:4] };
+                 {countercarry,counterl} <= counterl + 1'b1;
                  end
 
           2'b11: begin // 4th byte of the instruction (fill arg2, imm and flag)
@@ -642,6 +734,9 @@ always @(posedge clk) begin
                           arg2 <= 32'h00000000;
                         end
                  endcase
+                 if(countercarry==1'b1) begin
+                    counterh <= counterh + 1'b1;
+                 end
                  end
         endcase
      end
@@ -669,6 +764,14 @@ data_out=8'h00;
 wren=1'b0;
 sbytes=3'b0;
 lbytes=3'b0;
+counterl=32'h00000000;
+counterh=32'h00000000;
+comparel=32'h00000000;
+compareh=32'h00000000;
+level=2'b11;
+mip_mtip=1'b0;
+mip_ssip=1'b0;
+mip_stip=1'b0;
 end
 
 endmodule
