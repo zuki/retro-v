@@ -36,7 +36,7 @@ As you can see Retro-V core reads from register file in cycles 3 and 4 and write
 The fact that reading and writing are always performed in different moments in time allows us to implement register file by block memory inside FPGA.
 Also it is obvious that this design doesn't have hazard problem if the same register is written in one instruction and we have read
 in the next because instruction reads 1st argument in cycle 3 and write back from previous instruction is already happened in previous cycle.
-In case of jump (**JAL/JALR** or **BRANCH** instructions and in v1.1 **EBREAK** and **ECALL**) next instruction from pipeline alread performed
+In case of jump (**JAL/JALR** or **BRANCH** instructions and also **EBREAK** and **ECALL** in v1.1) next instruction from pipeline alread performed
 1st cycle, so it stops right there and next cycle is 1st one from new address effectively re-initing the pipeline (so branch penalty is only 1 cycle).
 In case of memory access (**LOAD** or **STORE** instructions) state machine stays in cycle 4 for a while (to load or store bytes from/to memory one by one wasting
 from 1 to 5 extra cycles) and next instruction in pipeline is kind of frozen between cycle 1 and cycle 2 in the same time.
@@ -51,7 +51,7 @@ If we count only "visible" cycles (from the beginning of one instructions to the
 * **SB** takes 6 cycles (because of 1 extra cycle to write 1 byte to memory and 1 preparational cycle)
 * **SH** takes 7 cycles (because of 2 extra cycles to read 2 bytes from memory and 1 preparational cycle)
 * **SW** takes 9 cycles (because of 4 extra cycles to read 4 bytes from memory and 1 preparational cycle)
-* **ECALL** and **EBRAKE** (added to Retro-V v1.1) also take 5 cycles
+* **ECALL** and **EBRAKE** (added in Retro-V v1.1) also take 5 cycles
 * Everything else takes 4 cycles (plus 2 hidden cycles on the 2nd stage of pipeline)
 
 ## RV32I compliance tests
@@ -91,7 +91,7 @@ Current compliance tests status for Retro-V soft core is 54/55=98%:
     Check         I-LHU-01 ... OK
     Check         I-LUI-01 ... OK
     Check          I-LW-01 ... OK
-    Check I-MISALIGN_JMP-01 ... **FAIL**
+    Check I-MISALIGN_JMP-01 ... FAIL
     Check I-MISALIGN_LDST-01 ... OK
     Check         I-NOP-01 ... OK
     Check          I-OR-01 ... OK
