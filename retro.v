@@ -2,7 +2,7 @@
 // that is compilable by Verilator, capable to pass RV32I compliance tests
 // and compatible with RTOS Zephyr v1.13.0
 //
-// RETRO-V v1.1-Alpha2 (November 2018)
+// RETRO-V v1.1-Alpha3 (November 2018)
 //
 // Copyright 2018 Alexander Shabarshin <ashabarshin@gmail.com>
 //
@@ -526,10 +526,26 @@ always @(posedge clk) begin
                     10'b0001110011: // ECALL, EBREAK and other priviledged instructions
                        begin
                           case(imm[11:0])
-//                          12'b000000000000: // ECALL
-
-//                          12'b000000000001: // EBREAK
-
+                          12'b000000000000, // ECALL (exception 0x8+level)
+                          12'b000000000001: // EBREAK (exception 0x3)
+                             begin
+                               if(imm[0]) begin
+                                  mcause <= 4'b0011;
+                               end else begin
+                                  mcause <= 4'b1000 + {2'b0,level};
+                               end
+                               mcausei <= 1'b0;
+                               mepc <= pc2;
+                               mtval <= 32'b0;
+                               mst_mpie <= level[0];
+                               mst_mpp <= level;
+                               mst_mie <= 1'b0;
+                               level <= 2'b11;
+                               pc2 <= mtvec;
+                               pcflag <= 1'b1; // set pc-change event
+                               op <= 10'b0; // !!!
+                               res <= 32'b0;
+                             end
                           12'b000100000010: // SRET
                              begin
                                if(mst_spp) begin
