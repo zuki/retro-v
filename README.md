@@ -1,9 +1,9 @@
-# Retro-V v1.0
+# Retro-V v1.1
 Retro-V is a SoftCPU in Verilog created by Shaos (completely from scratch)
 that implements RISC-V architecture RV32I (32-bit integer), but with 8-bit databus
 to resemble a retro 8-bit microprocessors suitable for building DIY computers
 around it ( like "nedoPC-5" for example: https://gitlab.com/nedopc/npc5 ).
-Retro-V is capable of passing RV32I compliance tests (now 82%), compatible with RTOS Zephyr (not yet there)
+Retro-V is capable of passing RV32I compliance tests (now 98%), compatible with RTOS Zephyr (not yet there)
 and distributed as fully open sourced Verilog single file soft core under Apache License:
 
     // Copyright 2018 Alexander Shabarshin <ashabarshin@gmail.com>
@@ -36,8 +36,8 @@ As you can see Retro-V core reads from register file in cycles 3 and 4 and write
 The fact that reading and writing are always performed in different moments in time allows us to implement register file by block memory inside FPGA.
 Also it is obvious that this design doesn't have hazard problem if the same register is written in one instruction and we have read
 in the next because instruction reads 1st argument in cycle 3 and write back from previous instruction is already happened in previous cycle.
-In case of jump ( **JAL/JALR** or **BRANCH** instructions) next instruction from pipeline alread performed 1st cycle,
-so it stops right there and next cycle is 1st one from new address effectively re-initing the pipeline (so branch penalty is only 1 cycle).
+In case of jump (**JAL/JALR** or **BRANCH** instructions and in v1.1 **EBREAK** and **ECALL**) next instruction from pipeline alread performed
+1st cycle, so it stops right there and next cycle is 1st one from new address effectively re-initing the pipeline (so branch penalty is only 1 cycle).
 In case of memory access (**LOAD** or **STORE** instructions) state machine stays in cycle 4 for a while (to load or store bytes from/to memory one by one wasting
 from 1 to 5 extra cycles) and next instruction in pipeline is kind of frozen between cycle 1 and cycle 2 in the same time.
 
@@ -51,13 +51,14 @@ If we count only "visible" cycles (from the beginning of one instructions to the
 * **SB** takes 6 cycles (because of 1 extra cycle to write 1 byte to memory and 1 preparational cycle)
 * **SH** takes 7 cycles (because of 2 extra cycles to read 2 bytes from memory and 1 preparational cycle)
 * **SW** takes 9 cycles (because of 4 extra cycles to read 4 bytes from memory and 1 preparational cycle)
+* **ECALL** and **EBRAKE** (added to Retro-V v1.1) also take 5 cycles
 * Everything else takes 4 cycles (plus 2 hidden cycles on the 2nd stage of pipeline)
 
 ## RV32I compliance tests
 
 Tests available here: https://github.com/riscv/riscv-compliance/
 
-Current compliance tests status for Retro-V soft core is 45/55=81.8%:
+Current compliance tests status for Retro-V soft core is 54/55=98%:
 
     Check         I-ADD-01 ... OK
     Check        I-ADDI-01 ... OK
@@ -70,15 +71,15 @@ Current compliance tests status for Retro-V soft core is 45/55=81.8%:
     Check         I-BLT-01 ... OK
     Check        I-BLTU-01 ... OK
     Check         I-BNE-01 ... OK
-    Check       I-CSRRC-01   FAIL
-    Check      I-CSRRCI-01   FAIL
-    Check       I-CSRRS-01   FAIL
-    Check      I-CSRRSI-01   FAIL
-    Check       I-CSRRW-01   FAIL
-    Check      I-CSRRWI-01   FAIL
+    Check       I-CSRRC-01 ... OK
+    Check      I-CSRRCI-01 ... OK
+    Check       I-CSRRS-01 ... OK
+    Check      I-CSRRSI-01 ... OK
+    Check       I-CSRRW-01 ... OK
+    Check      I-CSRRWI-01 ... OK
     Check I-DELAY_SLOTS-01 ... OK
-    Check      I-EBREAK-01   FAIL
-    Check       I-ECALL-01   FAIL
+    Check      I-EBREAK-01 ... OK
+    Check       I-ECALL-01 ... OK
     Check   I-ENDIANESS-01 ... OK
     Check     I-FENCE.I-01 ... OK
     Check             I-IO ... OK
@@ -90,8 +91,8 @@ Current compliance tests status for Retro-V soft core is 45/55=81.8%:
     Check         I-LHU-01 ... OK
     Check         I-LUI-01 ... OK
     Check          I-LW-01 ... OK
-    Check I-MISALIGN_JMP-01  FAIL
-    Check I-MISALIGN_LDST-01 FAIL
+    Check I-MISALIGN_JMP-01 ... **FAIL**
+    Check I-MISALIGN_LDST-01 ... OK
     Check         I-NOP-01 ... OK
     Check          I-OR-01 ... OK
     Check         I-ORI-01 ... OK
@@ -115,21 +116,23 @@ Current compliance tests status for Retro-V soft core is 45/55=81.8%:
     Check         I-XOR-01 ... OK
     Check        I-XORI-01 ... OK
     --------------------------------
-    FAIL: 10/55
+    FAIL: 1/55
 
 ## FPGA implementation
 
 Current Design Statistics from iCEcube2 for iCE40UP5K FPGA:
 
-    Number of LUTs      	:	2187
-    Number of DFFs      	:	324
-    Number of DFFs packed to IO :	0
-    Number of Carrys    	:	275
+    Final Design Statistics
+
+    Number of LUTs      	:	3366
+    Number of DFFs      	:	662
+    Number of DFFs packed to IO	:	0
+    Number of Carrys    	:	337
     Number of RAMs      	:	4
     Number of ROMs      	:	0
     Number of IOs       	:	35
     Number of GBIOs     	:	1
-    Number of GBs       	:	4
+    Number of GBs       	:	6
     Number of WarmBoot  	:	0
     Number of PLLs      	:	0
     Number of I2Cs      	:	0
@@ -140,13 +143,13 @@ Current Design Statistics from iCEcube2 for iCE40UP5K FPGA:
     Number of RGBADRVs     	:	0
     Number of LFOSCs     	:	0
     Number of HFOSCs     	:	0
-    Number of FILTER_50NSs	:	0
+    Number of FILTER_50NSs     	:	0
     Number of SPRAMs     	:	0
 
     Device Utilization Summary
 
-    LogicCells                  :	2265/5280
-    PLBs                        :	344/660
+    LogicCells                  :	3447/5280
+    PLBs                        :	484/660
     BRAMs                       :	4/30
     IOs and GBIOs               :	36/36
     PLLs                        :	0/1
@@ -161,11 +164,17 @@ Current Design Statistics from iCEcube2 for iCE40UP5K FPGA:
     SPRAMs                      :	0/4
     FILTER50NSs                 :	0/2
 
-Performance Summary (as estimated by iCEcube2):
-
-    Worst slack in design: -6.371
-                       Requested     Estimated     Requested     Estimated                Clock        Clock                
-    Starting Clock     Frequency     Frequency     Period        Period        Slack      Type         Group                
-    ------------------------------------------------------------------------------------------------------------------------
-    retro|clk          48.4 MHz      29.9 MHz      20.681        33.423        -6.371     inferred     Autoconstr_clkgroup_0
-    ========================================================================================================================
+    #####################################################################
+    Placement Timing Summary
+    The timing summary is based on estimated routing delays after
+    placement. For final timing report, please carry out the timing
+    analysis after routing.
+    =====================================================================
+    #####################################################################
+                         Clock Summary 
+    =====================================================================
+    Number of clocks: 1
+    Clock: retro|clk | Frequency: 24.38 MHz | Target: 34.84 MHz
+    =====================================================================
+                         End of Clock Summary
+    #####################################################################

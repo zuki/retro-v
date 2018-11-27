@@ -2,7 +2,7 @@
 // that is compilable by Verilator, capable to pass RV32I compliance tests
 // and compatible with RTOS Zephyr v1.13.0
 //
-// RETRO-V v1.1-Alpha3 (November 2018)
+// RETRO-V v1.1-Alpha4 (November 2018)
 //
 // Copyright 2018 Alexander Shabarshin <ashabarshin@gmail.com>
 //
@@ -18,7 +18,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// THIS IS STILL WORK IN PROGRESS!!! NOT YET READY FOR TESTS OR ZEPHYR!
+// THIS IS STILL WORK IN PROGRESS!!! NOT YET READY FOR  ZEPHYR!
 
 module retro (nres,clk,hold,address,data_in,data_out,wren);
 
@@ -71,6 +71,7 @@ assign address = (lbytes!=3'b0||sbytes!=3'b0)?extaddr[ADDRESS_WIDTH-1:0]:pc[ADDR
 
 always @(posedge clk) begin
      if(~hold) begin
+
         case (pc[1:0])
 
           2'b00: begin // 1st byte of the instruction
@@ -229,6 +230,26 @@ always @(posedge clk) begin
                                    end
                                  default: // regular access to external memory
                                    begin
+                                    // this is needed only to pass the test...
+                                    if((op[8:7]==2'b10 && arg1[1:0]+imm[1:0]!=2'b0)||
+                                       (op[8:7]==2'b01 && arg1[0]+imm[0]!=1'b0)) begin
+                                          if(op[5]==0) begin
+                                            mcause <= 4'b0100;
+                                          end else begin
+                                            mcause <= 4'b0110;
+                                          end
+                                          mcausei <= 1'b0;
+                                          mepc <= pc2;
+                                          mtval <= arg1+imm;
+                                          mst_mpie <= level[0];
+                                          mst_mpp <= level;
+                                          mst_mie <= 1'b0;
+                                          level <= 2'b11;
+                                          pc2 <= mtvec;
+                                          pcflag <= 1'b1; // set pc-change event
+                                          op <= 10'b0; // !!!
+                                          res <= 32'b0;
+                                    end else begin // normal transfer init
                                     extaddr <= arg1+imm;
                                     if(op[5]==0) begin // LOAD
                                       lbytes <= (op[8:7]==2'b00)?3'b001:
@@ -247,6 +268,7 @@ always @(posedge clk) begin
                                                 (op[8:7]==2'b10)?2'b11:2'b0;
                                     end
                                     res <= 32'b0;
+                                    end // end of normal transfer init
                                    end
                                  endcase
                                end else begin // memory transfer in progress
@@ -966,6 +988,7 @@ always @(posedge clk) begin
                  end
                  end
         endcase
+
      end
 
 end
