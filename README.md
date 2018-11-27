@@ -22,7 +22,7 @@ and distributed as fully open sourced Verilog single file soft core under Apache
 
 **THIS IS STILL WORK IN PROGRESS!!! NOT YET READY FOR 100% COMPLIANCE OR ZEPHYR!**
 
-Retro-V soft core has 2-stage pipeline with 4 cycles per stage, so on average every instruction
+Retro-V soft core has 2-stage pipeline ( or more precisely 1.5-stage pipeline ; ) with 4 cycles per stage, so on average every instruction
 takes 4 cycles (with 40 MHz clock it will be 10 millions instructions per sec max):
 
 * **Cycle 1** - Fetch 1st byte of the instruction (lowest one)
@@ -49,8 +49,8 @@ If we count only "visible" cycles (from the beginning of one instructions to the
 * **LH/LHU** take 6 cycles (because of 2 extra cycles to read 2 bytes from memory)
 * **LW** takes 8 cycles (because of 4 extra cycles to read 4 bytes from memory)
 * **SB** takes 6 cycles (because of 1 extra cycle to write 1 byte to memory and 1 preparational cycle)
-* **SH** takes 7 cycles (because of 2 extra cycles to read 2 bytes from memory and 1 preparational cycle)
-* **SW** takes 9 cycles (because of 4 extra cycles to read 4 bytes from memory and 1 preparational cycle)
+* **SH** takes 7 cycles (because of 2 extra cycles to write 2 bytes to memory and 1 preparational cycle)
+* **SW** takes 9 cycles (because of 4 extra cycles to write 4 bytes to memory and 1 preparational cycle)
 * **ECALL** and **EBRAKE** (added in Retro-V v1.1) also take 5 cycles
 * Everything else takes 4 cycles (plus 2 hidden cycles on the 2nd stage of pipeline)
 
