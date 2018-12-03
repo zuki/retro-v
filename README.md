@@ -120,9 +120,10 @@ Current compliance tests status for Retro-V soft core is 54/55=98%:
     --------------------------------
     FAIL: 1/55
 
-## Dhrystone results (also through Verilator
+## Dhrystone results (run through Verilator)
 
-On my AMD64 machine Verilator from Debian Linux is capable of running Retro-V core with about 2 MHz clock, so I set HZ to be 500,000 (4 times less to match time/cycle/instruction counter):
+On my AMD64 machine Verilator from Debian Linux is capable of running Retro-V core with about 2 MHz clock,
+so I in Dhrystone set HZ to be 500,000 (4 times less to match time/cycle/instruction counter in the core):
 
     Dhrystone Benchmark, Version C, Version 2.2
     Program compiled without 'register' attribute
