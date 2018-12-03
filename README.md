@@ -182,7 +182,9 @@ On my machine Verilator is capable of running this core with about 2 MHz clock, 
     Dhrystones per Second:                      1108
     mcycle = 225523
 
-That is 1108 / 1757 = 0.63 DMIPS or for 2 MHz it's 0.315 DMIPS/MHZ (5.5 times less than official RISC-V rocket core results).
+That is 1108 / 1757 = 0.63 DMIPS or for 2 MHz it's 0.315 DMIPS/MHZ - 5.5 times slower than official RISC-V rocket core:
+
+https://riscv.org/2014/10/about-our-dhrystone-benchmarking-methodology/
 
 ## FPGA implementation
 
