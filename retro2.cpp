@@ -212,7 +212,7 @@ int main(int argc, char** argv, char** env)
 
      if(top->wren && !old_clk)
      {
-          printf("write 0x%2.2X to 0x%4.4X\n",(unsigned char)top->data_out,top->address);
+//          printf("write 0x%2.2X to 0x%4.4X\n",(unsigned char)top->data_out,top->address);
           if(top->address==0xFFFF && top->clk) cerr << (char)top->data_out;
           else ram[top->address] = (unsigned char)top->data_out;
      }
