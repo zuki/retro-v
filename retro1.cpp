@@ -3,6 +3,7 @@
 #include "verilated.h"
 #include <iostream>
 #include <iomanip>
+#include <time.h>
 
 unsigned char rom[] = {
 /* 000x */ 0xB7, 0x07, 0x01, 0x00, 0x93, 0x87, 0x87, 0x07, 0x13, 0x07, 0x80, 0x04, 0xB7, 0x26, 0x00, 0x40,
@@ -14,6 +15,7 @@ unsigned char rom[] = {
 /* 006x */ 0xB7, 0x26, 0x00, 0x40, 0x23, 0x80, 0xE6, 0x00, 0x93, 0x87, 0x17, 0x00, 0x03, 0xC7, 0x07, 0x00,
 /* 007x */ 0xE3, 0x1A, 0x07, 0xFE, 0x67, 0x80, 0x00, 0x00, 0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20, 0x52, 0x49,
 /* 008x */ 0x53, 0x43, 0x2D, 0x56, 0x21, 0x0A, 0x00, 0x00
+
 };
 
 int main(int argc, char** argv, char** env)
@@ -21,11 +23,13 @@ int main(int argc, char** argv, char** env)
   Verilated::commandArgs(argc,argv);
 
   int adr=0, old_clk=0;
-  unsigned long t=0;
+  unsigned long t=0,tt=0,t1,t2;
 
   Vretro* top = new Vretro();
 
   cout << internal << setfill('0');
+
+  t1 = (unsigned long)clock();
 
   while(!Verilated::gotFinish())
   {
@@ -43,8 +47,25 @@ int main(int argc, char** argv, char** env)
         top->nres = 1;
      }
 
+     if(!old_clk && top->clk)
+     {
+         tt++;
+
+         t2 = clock();
+
+         if((t2-t1)*1000/CLOCKS_PER_SEC >= 1000)
+         {
+            cout << "   dT=" << tt << endl; // print cycles per second
+            tt = 0;
+            t1 = t2;
+         }
+     }
+
      top->eval(); // <<<<<<<<< EVAL
 
+#if 1
+     t++;
+#else
      cout << t++ << " nres=" << (int)top->nres << " clk=" << (int)top->clk << " address=" << hex << setw(4) << (int)top->address
           << " din=" << setw(2) << (int)top->data_in << " dout=" << setw(2) << (int)top->data_out << " wren=" << (int)top->wren
           << " inst=" << setw(8) << (int)top->retro->inst << " rd=" << (int)top->retro->__PVT__rd
@@ -52,11 +73,14 @@ int main(int argc, char** argv, char** env)
           << " x13=" << setw(8) << (int)top->retro->__PVT__regs[13]
           << " x14=" << setw(8) << (int)top->retro->__PVT__regs[14]
           << " x15=" << setw(8) << (int)top->retro->__PVT__regs[15]
+//          << " |" << setw(8) << (int)top->retro->__PVT__counterh
+//          << "|" << setw(8) << (int)top->retro->__PVT__counterl << "|"
           << " extaddr=" << setw(8) << (int)top->retro->__PVT__extaddr
           << " res=" << setw(8) << (int)top->retro->__PVT__res
           << setw(4) << " op=" << (int)top->retro->__PVT__op << dec << " errop=" << (int)top->retro->errop
           << " lbytes=" << (int)top->retro->__PVT__lbytes << " sbytes=" << (int)top->retro->__PVT__sbytes
           << endl;
+#endif
 
      if(top->address==0xFFFF && !old_clk && top->clk)
      {
