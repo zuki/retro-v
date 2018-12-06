@@ -1,8 +1,7 @@
-// retro.v - very simplistic implementation of RISC-V architecture RV32I
-// that is compilable by Verilator, capable to pass RV32I compliance tests
-// and compatible with RTOS Zephyr v1.13.0
+// retro.v - very simplistic implementation of RISC-V architecture RV32I in Verilog
+// that is compatible with Verilator and capable to pass RV32I compliance tests.
 //
-// RETRO-V v1.1-Alpha4 (November 2018)
+// RETRO-V v1.1-Alpha5 (November-December 2018)
 //
 // Copyright 2018 Alexander Shabarshin <ashabarshin@gmail.com>
 //
@@ -18,12 +17,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// THIS IS STILL WORK IN PROGRESS!!! NOT YET READY FOR  ZEPHYR!
+// THIS IS STILL WORK IN PROGRESS!!!
+
+// enable this if you need to pass compliance test MISALIGN_LDST:
+`define MISALIGN_LDST
 
 module retro (nres,clk,hold,address,data_in,data_out,wren);
 
 parameter ADDRESS_WIDTH = 16;       // address bus width
-parameter REGISTERS_NUM = 32;       // number of registers
 input nres;                         // external negative reset
 input clk;                          // external clock
 input hold;                         // external hold
@@ -32,13 +33,12 @@ input [7:0] data_in;                // data in for memory read
 output reg [7:0] data_out;          // data out for memory write
 output reg wren;                    // memory write enable
 // special internal addresses:
-parameter MTIME_ADDR    = 32'h40000000;
-parameter MTIMECMP_ADDR = 32'h40000008;
-parameter UART_TX_ADDR  = 32'h40002000;
-parameter START_ADDR    = 32'h80000000;
-
+localparam MTIME_ADDR    = 32'h40000000;
+localparam MTIMECMP_ADDR = 32'h40000008;
+localparam UART_TX_ADDR  = 32'h40002000;
+localparam START_ADDR    = 32'h80000000;
 // general purpose & control and status registers
-reg [31:0] regs[REGISTERS_NUM-1:0] /* synthesis syn_ramstyle="block_ram" */;
+reg [31:0] regs[31:0] /* synthesis syn_ramstyle="block_ram" */;
 reg [31:0] inst /*verilator public*/;
 reg [31:0] arg1 /*verilator public*/;
 reg [31:0] arg2 /*verilator public*/;
@@ -51,7 +51,7 @@ reg [4:0] rd,rd2; // destination register ids
 reg [2:0] lbytes; // current number of bytes to load
 reg [2:0] sbytes; // current number of bytes to store
 reg [1:0] bytes;  // total number of bytes to transfer (3 means 4)
-reg [31:0] extaddr; // external address
+reg [31:0] extaddr; // external address (it is always 32 bits)
 reg [31:0] comparel; // lower part of compare register
 reg [31:0] compareh; // higher part of compare register
 reg [31:0] counterl; // lower part of the counter
@@ -230,6 +230,7 @@ always @(posedge clk) begin
                                    end
                                  default: // regular access to external memory
                                    begin
+`ifdef MISALIGN_LDST
                                     // this is needed only to pass the test...
                                     if((op[8:7]==2'b10 && arg1[1:0]+imm[1:0]!=2'b0)||
                                        (op[8:7]==2'b01 && arg1[0]+imm[0]!=1'b0)) begin
@@ -250,6 +251,7 @@ always @(posedge clk) begin
                                           op <= 10'b0; // !!!
                                           res <= 32'b0;
                                     end else begin // normal transfer init
+`endif
                                     extaddr <= arg1+imm;
                                     if(op[5]==0) begin // LOAD
                                       lbytes <= (op[8:7]==2'b00)?3'b001:
@@ -268,7 +270,9 @@ always @(posedge clk) begin
                                                 (op[8:7]==2'b10)?2'b11:2'b0;
                                     end
                                     res <= 32'b0;
+`ifdef MISALIGN_LDST
                                     end // end of normal transfer init
+`endif
                                    end
                                  endcase
                                end else begin // memory transfer in progress
