@@ -1,0 +1,25 @@
+# ##############################################################################
+
+# iCEcube PCF
+
+# Version:            2017.08.27940
+
+# File Generated:     Dec 9 2018 21:39:48
+
+# Family & Device:    iCE40UP5K
+
+# Package:            SG48
+
+# ##############################################################################
+
+###IOSet List 9
+set_io dataout[0] 2
+set_io dataout[1] 46
+set_io dataout[2] 47
+set_io dataout[3] 45
+set_io dataout[4] 48
+set_io dataout[5] 3
+set_io dataout[6] 4
+set_io dataout[7] 44
+set_io wren 6
+
