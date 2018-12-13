@@ -1,0 +1,135 @@
+* ******************************************************************************
+
+* iCEcube Report
+
+* Version:            2017.08.27940
+
+* Build Date:         Sep 12 2017 08:02:28
+
+* File Generated:     Dec 12 2018 21:51:18
+
+* Purpose:            General info of design implementation
+
+* Copyright (C) 2006-2010 by Lattice Semiconductor Corp. All rights reserved.
+
+* ******************************************************************************
+
+Synthesis/Placement Summary:
+----------------------------
+    Status:  Successful
+    Runtime: 6 seconds
+
+Device Info:
+------------
+    Device Family: iCE40UP
+    Device:        iCE40UP5K
+    Package:       SG48
+
+Design statistics:
+------------------
+    FFs:                  336
+    LUTs:                 2211
+    RAMs:                 4
+    IOBs:                 25
+    GBs:                  5
+    PLLs:                 0
+    Warm Boots:           0
+    SPIs:                 0
+    I2Cs:                 0
+    HFOSCs:               1
+    LFOSCs:               0
+    RGBA_DRVs:            1
+    LEDDA_IPs:            0
+    DSPs:                 0
+    SPRAMs:               0
+    FILTER_50NSs:         0
+
+Logic Resource Utilization:
+---------------------------
+    Total Logic Cells: 2313/5280
+        Combinational Logic Cells: 1977     out of   5280      37.4432%
+        Sequential Logic Cells:    336      out of   5280      6.36364%
+        Logic Tiles:               342      out of   660       51.8182%
+    Registers: 
+        Logic Registers:           336      out of   5280      6.36364%
+        IO Registers:              0        out of   480       0
+    Block RAMs:                    4        out of   30        13.3333%
+    Warm Boots:                    0        out of   1         0%
+    SPIs:                          0        out of   2         0%
+    I2Cs:                          0        out of   2         0%
+    HFOSCs:                        1        out of   1         100%
+    LFOSCs:                        0        out of   1         0%
+    RGBA_DRVs:                     1        out of   1         100%
+    LEDDA_IPs:                     0        out of   1         0%
+    DSPs:                          0        out of   8         0%
+    SPRAMs:                        0        out of   4         0%
+    FILTER_50NSs:                  0        out of   2         0%
+    Pins:
+        Input Pins:                0        out of   39        0%
+        Output Pins:               25       out of   39        64.1026%
+        InOut Pins:                0        out of   39        0%
+    Global Buffers:                5        out of   8         62.5%
+    PLLs:                          0        out of   1         0%
+
+IO Bank Utilization:
+--------------------
+    Bank 3: 0        out of   0         0%
+    Bank 1: 0        out of   0         0%
+    Bank 0: 13       out of   17        76.4706%
+    Bank 2: 12       out of   22        54.5455%
+
+Detailed I/O Info:
+------------------
+    Output Pins: 
+    Pin Number  Direction  IO Standard  Pull Up  IO Bank  IO Function    Signal Name  
+    ----------  ---------  -----------  -------  -------  -----------    -----------  
+    2           Output     SB_LVCMOS    No       2        Simple Output  dataout[0]   
+    3           Output     SB_LVCMOS    No       2        Simple Output  dataout[5]   
+    4           Output     SB_LVCMOS    No       2        Simple Output  dataout[6]   
+    6           Output     SB_LVCMOS    No       2        Simple Output  wren         
+    15          Output     SB_LVCMOS    No       2        Simple Output  addrout[0]   
+    16          Output     SB_LVCMOS    No       2        Simple Output  addrout[1]   
+    17          Output     SB_LVCMOS    No       2        Simple Output  addrout[13]  
+    23          Output     SB_LVCMOS    No       0        Simple Output  addrout[5]   
+    25          Output     SB_LVCMOS    No       0        Simple Output  addrout[7]   
+    26          Output     SB_LVCMOS    No       0        Simple Output  addrout[15]  
+    27          Output     SB_LVCMOS    No       0        Simple Output  addrout[2]   
+    28          Output     SB_LVCMOS    No       0        Simple Output  addrout[14]  
+    31          Output     SB_LVCMOS    No       0        Simple Output  addrout[12]  
+    32          Output     SB_LVCMOS    No       0        Simple Output  addrout[10]  
+    34          Output     SB_LVCMOS    No       0        Simple Output  addrout[9]   
+    35          Output     SB_LVCMOS    No       0        Simple Output  addrout[6]   
+    36          Output     SB_LVCMOS    No       0        Simple Output  addrout[4]   
+    37          Output     SB_LVCMOS    No       0        Simple Output  addrout[8]   
+    42          Output     SB_LVCMOS    No       0        Simple Output  addrout[3]   
+    43          Output     SB_LVCMOS    No       0        Simple Output  addrout[11]  
+    44          Output     SB_LVCMOS    No       2        Simple Output  dataout[7]   
+    45          Output     SB_LVCMOS    No       2        Simple Output  dataout[3]   
+    46          Output     SB_LVCMOS    No       2        Simple Output  dataout[1]   
+    47          Output     SB_LVCMOS    No       2        Simple Output  dataout[2]   
+    48          Output     SB_LVCMOS    No       2        Simple Output  dataout[4]   
+
+Detailed Global Buffer Info:
+----------------------------
+    Buffer Number  IO Bank  Driven By  Fanout  Signal Name    
+    -------------  -------  ---------  ------  -----------    
+    5              2                   35      cpu.N_261_g    
+    3              0                   69      cpu.N_204_1_g  
+    1              0                   32      cpu.N_63_g     
+    7              2                   32      cpu.N_16_g     
+    6              2                   12      N_6_g          
+
+
+Router Summary:
+---------------
+    Status:  Successful
+    Runtime: 23 seconds
+
+Routing Resource Utilization:
+-----------------------------
+              Local line of tile    16414 out of 110555      14.8469%
+                          Span 4     5603 out of  23008      24.3524%
+                         Span 12      837 out of   4464      18.75%
+                  Global network        6 out of      8      75%
+      Vertical Inter-LUT Connect      667 out of   4620      14.4372%
+
