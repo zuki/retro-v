@@ -1,1 +1,3 @@
-FPGA examples
+FPGA examples:
+iCEcube2-test1 - Retro-V v1.0.0 soft core + test "Hello RISC-V!" with 8-bit output (LEDs)
+iCEcube2-test1s - Retro-V v1.0.0 soft core running on 12 MHz + test "Hello RISC-V!" with serial output (115,200 bod)
