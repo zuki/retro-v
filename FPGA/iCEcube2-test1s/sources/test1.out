@@ -1,0 +1,16 @@
+
+test1:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+00010054 <_start>:
+   10054:	000107b7          	lui	a5,0x10
+   10058:	07878793          	addi	a5,a5,120 # 10078 <_start+0x24>
+   1005c:	04800713          	li	a4,72
+   10060:	400026b7          	lui	a3,0x40002
+   10064:	00e68023          	sb	a4,0(a3) # 40002000 <__global_pointer$+0x3fff0778>
+   10068:	00178793          	addi	a5,a5,1
+   1006c:	0007c703          	lbu	a4,0(a5)
+   10070:	fe071ae3          	bnez	a4,10064 <_start+0x10>
+   10074:	00008067          	ret
