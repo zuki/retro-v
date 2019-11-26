@@ -248,14 +248,14 @@ Current Design Statistics from iCEcube2 for iCE40UP5K FPGA:
                          End of Clock Summary
     #####################################################################
 
-## Retro-V v1.0.0 (simplified earlier version)
+## Old version Retro-V v1.0.0
+
+https://gitlab.com/shaos/retro-v/-/tags/v1.0.0
 
 Complete RV32I user level implementation (no CSRs, no exceptions, no traps,
 no misalignment checks) that is passing 45 out of 55 RV32I compliance tests
 (10 failed tests are I-CSRRC-01, I-CSRRCI-01, I-CSRRS-01, I-CSRRSI-01, I-CSRRW-01,
-I-CSRRWI-01, I-EBREAK-01, I-ECALL-01, I-MISALIGN_JMP-01, I-MISALIGN_LDST-01):
-
-https://gitlab.com/shaos/retro-v/-/tags/v1.0.0
+I-CSRRWI-01, I-EBREAK-01, I-ECALL-01, I-MISALIGN_JMP-01, I-MISALIGN_LDST-01).
 
 Total Logic Cells: 2313/5280 (44% of iCE40UP5K FPGA)
 
