@@ -22,65 +22,74 @@
 // enable this if you need to pass compliance test MISALIGN_LDST:
 `define MISALIGN_LDST
 
-module retro (nres,clk,hold,address,data_in,data_out,wren);
+module retro #(
+    parameter ADDRESS_WIDTH = 16        // address bus width
+) (
+    input                       nres,       // external negative reset
+    input                       clk,        // external clock
+    input                       hold,       // external hold
+    output [ADDRESS_WIDTH-1:0]  address,    // address bus for external memory
+    input [7:0]                 data_in,    // data in for memory read
+    output reg [7:0]            data_out,   // data out for memory write
+    output reg                  wren = 1'b0 // memory write enable
+);
 
-parameter ADDRESS_WIDTH = 16;       // address bus width
-input nres;                         // external negative reset
-input clk;                          // external clock
-input hold;                         // external hold
-output [ADDRESS_WIDTH-1:0] address; // address bus for external memory
-input [7:0] data_in;                // data in for memory read
-output reg [7:0] data_out;          // data out for memory write
-output reg wren;                    // memory write enable
 // special internal addresses:
 localparam MTIME_ADDR    = 32'h40000000;
 localparam MTIMECMP_ADDR = 32'h40000008;
 localparam UART_TX_ADDR  = 32'h40002000;
-localparam START_ADDR    = 32'h80000000;
+//localparam START_ADDR    = 32'h80000000;
+localparam START_ADDR    = 32'h00000000;
 // general purpose & control and status registers
-reg [31:0] regs[31:0] /* synthesis syn_ramstyle="block_ram" */;
-reg [31:0] inst /*verilator public*/;
-reg [31:0] arg1 /*verilator public*/;
-reg [31:0] arg2 /*verilator public*/;
-reg [31:0] imm  /*verilator public*/;
+reg [31:0] regs[31:0];
+reg [31:0] inst;
+reg [31:0] arg1;
+reg [31:0] arg2;
+reg [31:0] imm ;
 reg [31:0] pc;  // program counter
 reg [31:0] pc2; // stored program counter
 reg [31:0] res; // result register
 reg [9:0] op;   // extended opcode
 reg [4:0] rd,rd2; // destination register ids
-reg [2:0] lbytes; // current number of bytes to load
-reg [2:0] sbytes; // current number of bytes to store
+reg [2:0] lbytes = 3'b0; // current number of bytes to load
+reg [2:0] sbytes = 3'b0; // current number of bytes to store
 reg [1:0] bytes;  // total number of bytes to transfer (3 means 4)
 reg [31:0] extaddr; // external address (it is always 32 bits)
-reg [31:0] comparel; // lower part of compare register
-reg [31:0] compareh; // higher part of compare register
-reg [31:0] counterl; // lower part of the counter
-reg [31:0] counterh; // higher part of the counter
+reg [31:0] comparel = 32'h00000000; // lower part of compare register
+reg [31:0] compareh = 32'h00000000; // higher part of compare register
+reg [31:0] counterl = 32'h00000000; // lower part of the counter
+reg [31:0] counterh = 32'h00000000; // higher part of the counter
 reg countercarry; // carry bit from lower to higher
-reg flag,pcflag,unflag,errop/*verilator public*/; // flags
-reg [1:0] level; // 00=U 01=S 10=H 11=M
-reg mip_meip,mip_seip,mip_mtip,mip_stip,mip_msip,mip_ssip;
+reg flag,pcflag,unflag,errop; // flags
+reg [1:0] level = 2'b11; // 00=U 01=S 10=H 11=M
+reg mip_mtip = 1'b0;
+reg mip_ssip = 1'b0;
+reg mip_stip = 1'b0;
+reg mst_mie = 1'b0;
+reg mst_mprv = 1'b0;
+reg mip_meip,mip_seip,mip_msip;
 reg mie_meie,mie_seie,mie_mtie,mie_stie,mie_msie,mie_ssie;
 reg [1:0] mst_xs,mst_fs,mst_mpp;
-reg mst_uie,mst_sie,mst_mie,mst_upie,mst_spie,mst_mpie,mst_spp,mst_mprv,mst_sum,mst_mxr;
+reg mst_uie,mst_sie,mst_upie,mst_spie,mst_mpie,mst_spp,mst_sum,mst_mxr;
 reg [31:0] sepc,mscratch,mepc,mtval,mtvec;
 reg [3:0] mcause;
 reg mcausei; // highest bit of mcause
 
-assign address = (lbytes!=3'b0||sbytes!=3'b0)?extaddr[ADDRESS_WIDTH-1:0]:pc[ADDRESS_WIDTH-1:0];
+assign address = (lbytes != 3'b0 || sbytes != 3'b0) ? extaddr[ADDRESS_WIDTH-1:0] : pc[ADDRESS_WIDTH-1:0];
 
 always @(posedge clk) begin
      if(~hold) begin
-
+        // 4バイトの名レコードを1バイトずつ読む
         case (pc[1:0])
-
+          // 右辺の pc2は現命令のアドレス, pcは次の命令アドレス
           2'b00: begin // 1st byte of the instruction
+                // 第1ステージではinstのLSBのセットのみ
                  if(sbytes==3'b0 && lbytes==3'b0) begin
                     inst <= { 24'h000000, data_in };
                  end else begin
                     inst <= { 24'h000000, inst[7:0] };
                  end
-                 // 2nd stage of pipeline below
+                 // 以降は、パイプラインの第2ステージの処理
                  if(op[6:0]==7'b0) begin
                     // in case of pipleine re-init
                     rd2 <= 5'b0;
@@ -260,7 +269,7 @@ always @(posedge clk) begin
                                       bytes  <= (op[8:7]==2'b00)?2'b01:
                                                 (op[8:7]==2'b01)?2'b10:
                                                 (op[8:7]==2'b10)?2'b11:2'b0;
-                                      unflag <= op[9];
+                                      unflag <= op[9];  // unsigned flag
                                     end else begin // STORE
                                       sbytes <= (op[8:7]==2'b00)?3'b010:
                                                 (op[8:7]==2'b01)?3'b011:
@@ -840,10 +849,11 @@ always @(posedge clk) begin
                     rd <= { data_in[3:0], inst[7] };
                  end
                  flag <= data_in[7];
-                 op <= { data_in[6:4], inst[6:0] };
+                 op <= { data_in[6:4], inst[6:0] }; // funct3 + opcode
                  // check if it's a valid opcode or not
                  case ( inst[6:0] )
                      7'b0110111,7'b0010111,7'b1101111,7'b0010011,7'b0110011:
+                     // LUI, AUIP, JAL, OP, OP-IMM: funct3のcheck不要
                        begin
                          errop <= 1'b0;
                        end
@@ -852,13 +862,13 @@ always @(posedge clk) begin
                          if(data_in[6:4]==3'b000) begin
                             errop <= 1'b0;
                          end else begin
-                            errop <= 1'b1;
+                            errop <= 1'b1;  // 存在しないfunct3
                          end
                        end
                      7'b1100011: // BRANCH
                        begin
                          if(data_in[6:4]==3'b010 || data_in[6:4]==3'b011) begin
-                            errop <= 1'b1;
+                            errop <= 1'b1;  // 存在しないfunct3
                          end else begin
                             errop <= 1'b0;
                          end
@@ -869,7 +879,7 @@ always @(posedge clk) begin
                             data_in[6:4]==3'b100 || data_in[6:4]==3'b101) begin
                             errop <= 1'b0;
                          end else begin
-                            errop <= 1'b1;
+                            errop <= 1'b1;  // 存在しないfunct3
                          end
                        end
                      7'b0100011: // SAVE
@@ -877,7 +887,7 @@ always @(posedge clk) begin
                          if(data_in[6:4]==3'b000 || data_in[6:4]==3'b001 || data_in[6:4]==3'b010) begin
                             errop <= 1'b0;
                          end else begin
-                            errop <= 1'b1;
+                            errop <= 1'b1;  // 存在しないfunct3
                          end
                        end
                      7'b0001111: // MISC-MEM (FENCE and FENCE.I)
@@ -885,13 +895,13 @@ always @(posedge clk) begin
                          if(data_in[6:4]==3'b000 || data_in[6:4]==3'b001) begin
                             errop <= 1'b0;
                          end else begin
-                            errop <= 1'b1;
+                            errop <= 1'b1;  // 存在しないfunct3
                          end
                        end
-                     7'b1110011: // SYSTEM
+                     7'b1110011: // SYSTEM (ECALL, EBREAK, CSR*)
                        begin
                          if(data_in[6:4]==3'b100) begin
-                            errop <= 1'b1;
+                            errop <= 1'b1;  // 存在しないfunct3
                          end else begin
                             errop <= 1'b0;
                          end
@@ -998,11 +1008,11 @@ always @(posedge clk) begin
 end
 
 always @(negedge clk) begin
-  if(nres) begin
-     if(~hold) begin
-        if(pcflag) begin
+  if (nres) begin
+     if (~hold) begin
+        if (pcflag) begin
            pc <= pc2 & 32'hFFFFFFFC;
-        end else if(sbytes==3'b0 && lbytes==3'b0) begin
+        end else if (sbytes==3'b0 && lbytes==3'b0) begin
            pc <= pc + 1'b1;
         end
      end
@@ -1013,21 +1023,7 @@ always @(negedge clk) begin
 end
 
 initial begin
-regs[0]=32'h00000000; // ???
-data_out=8'h00;
-wren=1'b0;
-sbytes=3'b0;
-lbytes=3'b0;
-counterl=32'h00000000;
-counterh=32'h00000000;
-comparel=32'h00000000;
-compareh=32'h00000000;
-level=2'b11;
-mip_mtip=1'b0;
-mip_ssip=1'b0;
-mip_stip=1'b0;
-mst_mie=1'b0;
-mst_mprv=1'b0;
+    regs[0] <= 32'h00000000; // ???
 end
 
 endmodule
